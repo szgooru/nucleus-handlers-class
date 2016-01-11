@@ -3,82 +3,110 @@ package org.gooru.nucleus.handlers.classes.processors;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.json.JsonObject;
 import org.gooru.nucleus.handlers.classes.constants.MessageConstants;
-import org.gooru.nucleus.handlers.classes.processors.exceptions.InvalidRequestException;
-import org.gooru.nucleus.handlers.classes.processors.exceptions.InvalidUserException;
+import org.gooru.nucleus.handlers.classes.processors.responses.ExecutionResult;
+import org.gooru.nucleus.handlers.classes.processors.responses.MessageResponse;
+import org.gooru.nucleus.handlers.classes.processors.responses.MessageResponseFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 class MessageProcessor implements Processor {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(Processor.class);
-  private Message<Object> message;
   String userId;
   JsonObject prefs;
   JsonObject request;
-  
+  private Message<Object> message;
+
   public MessageProcessor(Message<Object> message) {
     this.message = message;
   }
-  
+
   @Override
-  public JsonObject process() {
-    JsonObject result;
+  public MessageResponse process() {
+
+    MessageResponse result = null;
     try {
-      if (message == null || !(message.body() instanceof JsonObject)) {
-        LOGGER.error("Invalid message received, either null or body of message is not JsonObject ");
-        throw new InvalidRequestException();
+      // Validate the message itself
+      ExecutionResult<MessageResponse> validateResult = validateAndInitialize();
+      if (validateResult.isCompleted()) {
+        return validateResult.result();
       }
-      
+
       final String msgOp = message.headers().get(MessageConstants.MSG_HEADER_OP);
-      userId = ((JsonObject)message.body()).getString(MessageConstants.MSG_USER_ID);
-      if (userId == null) {
-        LOGGER.error("Invalid user id passed. Not authorized.");
-        throw new InvalidUserException();
-      }
-      prefs = ((JsonObject)message.body()).getJsonObject(MessageConstants.MSG_KEY_PREFS);
-      request = ((JsonObject)message.body()).getJsonObject(MessageConstants.MSG_HTTP_BODY);
       switch (msgOp) {
-      case MessageConstants.MSG_OP_CLASS_CREATE:
-        result = processClassCreate();
-        break;
-      case MessageConstants.MSG_OP_CLASS_GET:
-        result = processClassGet();
-        break;
-      case MessageConstants.MSG_OP_CLASS_UPDATE:
-        result = processClassUpdate();
-        break;
-      default:
-        LOGGER.error("Invalid operation type passed in, not able to handle");
-        throw new InvalidRequestException();
+        case MessageConstants.MSG_OP_CLASS_CREATE:
+          result = processClassCreate();
+          break;
+        case MessageConstants.MSG_OP_CLASS_GET:
+          result = processClassGet();
+          break;
+        case MessageConstants.MSG_OP_CLASS_UPDATE:
+          result = processClassUpdate();
+          break;
+        default:
+          LOGGER.error("Invalid operation type passed in, not able to handle");
+          return MessageResponseFactory.createInvalidRequestResponse("Invalid operation");
       }
       return result;
-    } catch (InvalidRequestException e) {
-      // TODO: handle exception
-    } catch (InvalidUserException e) {
-      // TODO: handle exception
+    } catch (Throwable e) {
+      LOGGER.error("Unhandled exception in processing", e);
+      return MessageResponseFactory.createInternalErrorResponse();
+    }
+  }
+
+  private MessageResponse processClassUpdate() {
+    // TODO Auto-generated method stub
+    String classId = message.headers().get(MessageConstants.CLASS_ID);
+
+    return null;
+  }
+
+  private MessageResponse processClassGet() {
+    // TODO Auto-generated method stub
+    String classId = message.headers().get(MessageConstants.CLASS_ID);
+
+    return null;
+  }
+
+  private MessageResponse processClassCreate() {
+    // TODO Auto-generated method stub
+
+    return null;
+  }
+
+
+  private ProcessorContext createContext() {
+    String classId = message.headers().get(MessageConstants.CLASS_ID);
+
+    return new ProcessorContext(userId, prefs, request, classId);
+  }
+
+  private ExecutionResult<MessageResponse> validateAndInitialize() {
+    if (message == null || !(message.body() instanceof JsonObject)) {
+      LOGGER.error("Invalid message received, either null or body of message is not JsonObject ");
+      return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse(), ExecutionResult.ExecutionStatus.FAILED);
     }
 
-    return null;
-  }
+    userId = ((JsonObject) message.body()).getString(MessageConstants.MSG_USER_ID);
+    if (userId == null) {
+      LOGGER.error("Invalid user id passed. Not authorized.");
+      return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(), ExecutionResult.ExecutionStatus.FAILED);
+    }
+    prefs = ((JsonObject) message.body()).getJsonObject(MessageConstants.MSG_KEY_PREFS);
+    request = ((JsonObject) message.body()).getJsonObject(MessageConstants.MSG_HTTP_BODY);
 
-  private JsonObject processClassUpdate() {
-    // TODO Auto-generated method stub
-    String classId = message.headers().get(MessageConstants.CLASS_ID);
-    
-    return null;    
-  }
+    if (prefs == null || prefs.isEmpty()) {
+      LOGGER.error("Invalid preferences obtained, probably not authorized properly");
+      return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(), ExecutionResult.ExecutionStatus.FAILED);
+    }
 
-  private JsonObject processClassGet() {
-    // TODO Auto-generated method stub
-    String classId = message.headers().get(MessageConstants.CLASS_ID);
-    
-    return null;
-  }
+    if (request == null) {
+      LOGGER.error("Invalid JSON payload on Message Bus");
+      return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse(), ExecutionResult.ExecutionStatus.FAILED);
+    }
 
-  private JsonObject processClassCreate() {
-    // TODO Auto-generated method stub
-    
-    return null;    
+    // All is well, continue processing
+    return new ExecutionResult<>(null, ExecutionResult.ExecutionStatus.CONTINUE_PROCESSING);
   }
 
 }

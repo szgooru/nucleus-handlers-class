@@ -11,7 +11,13 @@ public class Finalizers implements Iterable<Finalizer> {
 
   private List<Finalizer> finalizers = null;
   private Iterator<Finalizer> internalIterator;
-  
+
+  public Finalizers() {
+    finalizers = new ArrayList<Finalizer>();
+    finalizers.add(DataSourceRegistry.getInstance());
+    internalIterator = finalizers.iterator();
+  }
+
   @Override
   public Iterator<Finalizer> iterator() {
     Iterator<Finalizer> iterator = new Iterator<Finalizer>() {
@@ -25,15 +31,9 @@ public class Finalizers implements Iterable<Finalizer> {
       public Finalizer next() {
         return internalIterator.next();
       }
-      
+
     };
     return iterator;
-  }
-  
-  public Finalizers() {
-    finalizers = new ArrayList<Finalizer>();
-    finalizers.add(DataSourceRegistry.getInstance());    
-    internalIterator = finalizers.iterator();
   }
 
 

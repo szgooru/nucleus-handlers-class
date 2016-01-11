@@ -11,7 +11,13 @@ public class Initializers implements Iterable<Initializer> {
 
   private List<Initializer> initializers = null;
   private Iterator<Initializer> internalIterator;
-  
+
+  public Initializers() {
+    initializers = new ArrayList<Initializer>();
+    initializers.add(DataSourceRegistry.getInstance());
+    internalIterator = initializers.iterator();
+  }
+
   @Override
   public Iterator<Initializer> iterator() {
     Iterator<Initializer> iterator = new Iterator<Initializer>() {
@@ -25,15 +31,9 @@ public class Initializers implements Iterable<Initializer> {
       public Initializer next() {
         return internalIterator.next();
       }
-      
+
     };
     return iterator;
-  }
-  
-  public Initializers() {
-    initializers = new ArrayList<Initializer>();
-    initializers.add(DataSourceRegistry.getInstance());    
-    internalIterator = initializers.iterator();
   }
 
 

@@ -2,16 +2,15 @@ package org.gooru.nucleus.handlers.classes.bootstrap;
 
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
-import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.json.JsonObject;
 import org.gooru.nucleus.handlers.classes.bootstrap.shutdown.Finalizer;
 import org.gooru.nucleus.handlers.classes.bootstrap.shutdown.Finalizers;
 import org.gooru.nucleus.handlers.classes.bootstrap.startup.Initializer;
 import org.gooru.nucleus.handlers.classes.bootstrap.startup.Initializers;
-import org.gooru.nucleus.handlers.classes.constants.MessageConstants;
 import org.gooru.nucleus.handlers.classes.constants.MessagebusEndpoints;
 import org.gooru.nucleus.handlers.classes.processors.ProcessorBuilder;
+import org.gooru.nucleus.handlers.classes.processors.responses.MessageResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,18 +42,16 @@ public class ClassVerticle extends AbstractVerticle {
       LOGGER.debug("Received message: " + message.body());
 
       vertx.executeBlocking(future -> {
-        JsonObject result = new ProcessorBuilder(message).build().process();
+        MessageResponse result = new ProcessorBuilder(message).build().process();
         future.complete(result);
       }, res -> {
-        JsonObject result = (JsonObject) res.result();
-        DeliveryOptions options = new DeliveryOptions().addHeader(MessageConstants.MSG_OP_STATUS, result.getString(MessageConstants.MSG_OP_STATUS));
-        message.reply(result.getJsonObject(MessageConstants.RESP_CONTAINER_MBUS), options);
+        MessageResponse result = (MessageResponse) res.result();
+        message.reply(result.reply(), result.deliveryOptions());
 
-        JsonObject eventData = result.getJsonObject(MessageConstants.RESP_CONTAINER_EVENT);
+        JsonObject eventData = result.event();
         if (eventData != null) {
           eb.publish(MessagebusEndpoints.MBEP_EVENT, eventData);
         }
-
       });
 
 
@@ -80,7 +77,7 @@ public class ClassVerticle extends AbstractVerticle {
       for (Initializer initializer : initializers) {
         initializer.initializeComponent(vertx, config());
       }
-    } catch(IllegalStateException ie) {
+    } catch (IllegalStateException ie) {
       LOGGER.error("Error initializing application", ie);
       Runtime.getRuntime().halt(1);
     }
@@ -88,7 +85,7 @@ public class ClassVerticle extends AbstractVerticle {
 
   private void shutDownApplication() {
     Finalizers finalizers = new Finalizers();
-    for (Finalizer finalizer : finalizers ) {
+    for (Finalizer finalizer : finalizers) {
       finalizer.finalizeComponent();
     }
 
