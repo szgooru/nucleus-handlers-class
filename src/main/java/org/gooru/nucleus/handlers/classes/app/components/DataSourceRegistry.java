@@ -26,7 +26,7 @@ public class DataSourceRegistry implements Initializer, Finalizer {
   // that key
   private List<String> datasources = Arrays.asList(DEFAULT_DATA_SOURCE);
   private Map<String, DataSource> registry = new HashMap<>();
-  boolean initialized = false;
+  volatile boolean initialized = false;
   
   @Override
   public void initializeComponent(Vertx vertx, JsonObject config) {
