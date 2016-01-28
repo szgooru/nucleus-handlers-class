@@ -3,6 +3,7 @@ package org.gooru.nucleus.handlers.classes.processors;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.json.JsonObject;
 import org.gooru.nucleus.handlers.classes.constants.MessageConstants;
+import org.gooru.nucleus.handlers.classes.processors.repositories.RepoBuilder;
 import org.gooru.nucleus.handlers.classes.processors.responses.ExecutionResult;
 import org.gooru.nucleus.handlers.classes.processors.responses.MessageResponse;
 import org.gooru.nucleus.handlers.classes.processors.responses.MessageResponseFactory;
@@ -55,23 +56,27 @@ class MessageProcessor implements Processor {
   }
 
   private MessageResponse processClassUpdate() {
-    // TODO Auto-generated method stub
-    String classId = message.headers().get(MessageConstants.CLASS_ID);
-
-    return null;
+    ProcessorContext context = createContext();
+    if (context.classId() == null || context.classId().isEmpty()) {
+      LOGGER.error("Invalid request, class id not available. Aborting");
+      return MessageResponseFactory.createInvalidRequestResponse("Invalid class id");
+    }
+    return new RepoBuilder().buildQuestionRepo(context).updateClass();
   }
 
   private MessageResponse processClassGet() {
-    // TODO Auto-generated method stub
-    String classId = message.headers().get(MessageConstants.CLASS_ID);
-
-    return null;
+    ProcessorContext context = createContext();
+    if (context.classId() == null || context.classId().isEmpty()) {
+      LOGGER.error("Invalid request, class id not available. Aborting");
+      return MessageResponseFactory.createInvalidRequestResponse("Invalid class id");
+    }
+    return new RepoBuilder().buildQuestionRepo(context).fetchClass();
   }
 
   private MessageResponse processClassCreate() {
-    // TODO Auto-generated method stub
+    ProcessorContext context = createContext();
 
-    return null;
+    return new RepoBuilder().buildQuestionRepo(context).createClass();
   }
 
 
