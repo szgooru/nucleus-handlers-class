@@ -7,7 +7,7 @@ import org.gooru.nucleus.handlers.classes.processors.responses.MessageResponse;
 /**
  * Created by ashish on 28/1/16.
  */
-public class CreateClassHandler implements DBHandler {
+class CreateClassHandler implements DBHandler {
   private final ProcessorContext context;
 
   public CreateClassHandler(ProcessorContext context) {

@@ -15,20 +15,16 @@ public final class EventBuilderFactory {
   private static final String EVENT_BODY = "event.body";
   private static final String CLASS_ID = "id";
 
-  public static EventBuilder getDeleteQuestionEventBuilder(String questionId) {
+  public static EventBuilder getDeleteClassEventBuilder(String questionId) {
     return () -> new JsonObject().put(EVENT_NAME, EVT_CLASS_DELETE).put(EVENT_BODY, new JsonObject().put(CLASS_ID, questionId));
   }
 
-  public static EventBuilder getCreateQuestionEventBuilder(String questionId) {
+  public static EventBuilder getCreateClassEventBuilder(String questionId) {
     return () -> new JsonObject().put(EVENT_NAME, EVT_CLASS_CREATE).put(EVENT_BODY, new JsonObject().put(CLASS_ID, questionId));
   }
 
-  public static EventBuilder getUpdateQuestionEventBuilder(String questionId) {
+  public static EventBuilder getUpdateClassEventBuilder(String questionId) {
     return () -> new JsonObject().put(EVENT_NAME, EVT_CLASS_UPDATE).put(EVENT_BODY, new JsonObject().put(CLASS_ID, questionId));
-  }
-
-  public static EventBuilder getCopyQuestionEventBuilder(String questionId) {
-    return () -> new JsonObject().put(EVENT_NAME, EVT_CLASS_COPY).put(EVENT_BODY, new JsonObject().put(CLASS_ID, questionId));
   }
 
   private EventBuilderFactory() {

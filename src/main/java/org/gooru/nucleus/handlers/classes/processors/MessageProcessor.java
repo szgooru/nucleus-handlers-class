@@ -10,9 +10,13 @@ import org.gooru.nucleus.handlers.classes.processors.responses.MessageResponseFa
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ResourceBundle;
+import java.util.UUID;
+
 class MessageProcessor implements Processor {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(Processor.class);
+  private static final ResourceBundle RESOURCE_BUNDLE = ResourceBundle.getBundle("messages");
   private String userId;
   private JsonObject prefs;
   private JsonObject request;
@@ -46,12 +50,12 @@ class MessageProcessor implements Processor {
           break;
         default:
           LOGGER.error("Invalid operation type passed in, not able to handle");
-          return MessageResponseFactory.createInvalidRequestResponse("Invalid operation");
+          return MessageResponseFactory.createInvalidRequestResponse(RESOURCE_BUNDLE.getString("invalid.operation"));
       }
       return result;
     } catch (Throwable e) {
       LOGGER.error("Unhandled exception in processing", e);
-      return MessageResponseFactory.createInternalErrorResponse();
+      return MessageResponseFactory.createInternalErrorResponse(RESOURCE_BUNDLE.getString("unexpected.error"));
     }
   }
 
@@ -68,7 +72,7 @@ class MessageProcessor implements Processor {
     ProcessorContext context = createContext();
     if (context.classId() == null || context.classId().isEmpty()) {
       LOGGER.error("Invalid request, class id not available. Aborting");
-      return MessageResponseFactory.createInvalidRequestResponse("Invalid class id");
+      return MessageResponseFactory.createInvalidRequestResponse(RESOURCE_BUNDLE.getString("invalid.class"));
     }
     return RepoBuilder.buildClassRepo(context).fetchClass();
   }
@@ -89,29 +93,51 @@ class MessageProcessor implements Processor {
   private ExecutionResult<MessageResponse> validateAndInitialize() {
     if (message == null || !(message.body() instanceof JsonObject)) {
       LOGGER.error("Invalid message received, either null or body of message is not JsonObject ");
-      return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse(), ExecutionResult.ExecutionStatus.FAILED);
+      return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse(RESOURCE_BUNDLE.getString("invalid.payload")),
+        ExecutionResult.ExecutionStatus.FAILED);
     }
 
     userId = ((JsonObject) message.body()).getString(MessageConstants.MSG_USER_ID);
-    if (userId == null) {
+    if (!validateUser(userId)) {
       LOGGER.error("Invalid user id passed. Not authorized.");
-      return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(), ExecutionResult.ExecutionStatus.FAILED);
+      return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(RESOURCE_BUNDLE.getString("invalid.user")),
+        ExecutionResult.ExecutionStatus.FAILED);
     }
     prefs = ((JsonObject) message.body()).getJsonObject(MessageConstants.MSG_KEY_PREFS);
     request = ((JsonObject) message.body()).getJsonObject(MessageConstants.MSG_HTTP_BODY);
 
     if (prefs == null || prefs.isEmpty()) {
       LOGGER.error("Invalid preferences obtained, probably not authorized properly");
-      return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(), ExecutionResult.ExecutionStatus.FAILED);
+      return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(RESOURCE_BUNDLE.getString("invalid.preferences")),
+        ExecutionResult.ExecutionStatus.FAILED);
     }
 
     if (request == null) {
       LOGGER.error("Invalid JSON payload on Message Bus");
-      return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse(), ExecutionResult.ExecutionStatus.FAILED);
+      return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse(RESOURCE_BUNDLE.getString("invalid.payload")),
+        ExecutionResult.ExecutionStatus.FAILED);
     }
 
     // All is well, continue processing
     return new ExecutionResult<>(null, ExecutionResult.ExecutionStatus.CONTINUE_PROCESSING);
   }
 
+  private boolean validateUser(String userId) {
+    return !(userId == null || userId.isEmpty()) && (userId.equalsIgnoreCase(MessageConstants.MSG_USER_ANONYMOUS) || validateUuid(userId));
+  }
+
+  private boolean validateId(String id) {
+    return !(id == null || id.isEmpty()) && validateUuid(id);
+  }
+
+  private boolean validateUuid(String uuidString) {
+    try {
+      UUID uuid = UUID.fromString(uuidString);
+      return true;
+    } catch (IllegalArgumentException e) {
+      return false;
+    } catch (Exception e) {
+      return false;
+    }
+  }
 }

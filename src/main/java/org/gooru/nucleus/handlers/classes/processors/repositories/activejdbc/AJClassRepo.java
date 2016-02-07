@@ -9,7 +9,7 @@ import org.gooru.nucleus.handlers.classes.processors.responses.MessageResponse;
 /**
  * Created by ashish on 28/1/16.
  */
-public class AJClassRepo implements ClassRepo{
+public class AJClassRepo implements ClassRepo {
   private final ProcessorContext context;
 
   public AJClassRepo(ProcessorContext context) {
