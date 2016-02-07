@@ -19,7 +19,7 @@ import org.slf4j.LoggerFactory;
  */
 public class ClassVerticle extends AbstractVerticle {
 
-  static final Logger LOGGER = LoggerFactory.getLogger(ClassVerticle.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(ClassVerticle.class);
 
   @Override
   public void start(Future<Void> voidFuture) throws Exception {
@@ -42,7 +42,7 @@ public class ClassVerticle extends AbstractVerticle {
       LOGGER.debug("Received message: " + message.body());
 
       vertx.executeBlocking(future -> {
-        MessageResponse result = new ProcessorBuilder(message).build().process();
+        MessageResponse result = ProcessorBuilder.build(message).process();
         future.complete(result);
       }, res -> {
         MessageResponse result = (MessageResponse) res.result();

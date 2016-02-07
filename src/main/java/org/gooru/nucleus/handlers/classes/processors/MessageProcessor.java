@@ -13,10 +13,10 @@ import org.slf4j.LoggerFactory;
 class MessageProcessor implements Processor {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(Processor.class);
-  String userId;
-  JsonObject prefs;
-  JsonObject request;
-  private Message<Object> message;
+  private String userId;
+  private JsonObject prefs;
+  private JsonObject request;
+  private final Message<Object> message;
 
   public MessageProcessor(Message<Object> message) {
     this.message = message;
@@ -25,7 +25,7 @@ class MessageProcessor implements Processor {
   @Override
   public MessageResponse process() {
 
-    MessageResponse result = null;
+    MessageResponse result;
     try {
       // Validate the message itself
       ExecutionResult<MessageResponse> validateResult = validateAndInitialize();
@@ -61,7 +61,7 @@ class MessageProcessor implements Processor {
       LOGGER.error("Invalid request, class id not available. Aborting");
       return MessageResponseFactory.createInvalidRequestResponse("Invalid class id");
     }
-    return new RepoBuilder().buildQuestionRepo(context).updateClass();
+    return RepoBuilder.buildClassRepo(context).updateClass();
   }
 
   private MessageResponse processClassGet() {
@@ -70,13 +70,13 @@ class MessageProcessor implements Processor {
       LOGGER.error("Invalid request, class id not available. Aborting");
       return MessageResponseFactory.createInvalidRequestResponse("Invalid class id");
     }
-    return new RepoBuilder().buildQuestionRepo(context).fetchClass();
+    return RepoBuilder.buildClassRepo(context).fetchClass();
   }
 
   private MessageResponse processClassCreate() {
     ProcessorContext context = createContext();
 
-    return new RepoBuilder().buildQuestionRepo(context).createClass();
+    return RepoBuilder.buildClassRepo(context).createClass();
   }
 
 

@@ -18,16 +18,16 @@ public class AJClassRepo implements ClassRepo{
 
   @Override
   public MessageResponse createClass() {
-    return new TransactionExecutor().executeTransaction(new DBHandlerBuilder().buildCreateClassHandler(context));
+    return TransactionExecutor.executeTransaction(DBHandlerBuilder.buildCreateClassHandler(context));
   }
 
   @Override
   public MessageResponse updateClass() {
-    return new TransactionExecutor().executeTransaction(new DBHandlerBuilder().buildUpdateClassHandler(context));
+    return TransactionExecutor.executeTransaction(DBHandlerBuilder.buildUpdateClassHandler(context));
   }
 
   @Override
   public MessageResponse fetchClass() {
-    return new TransactionExecutor().executeTransaction(new DBHandlerBuilder().buildFetchClassHandler(context));
+    return TransactionExecutor.executeTransaction(DBHandlerBuilder.buildFetchClassHandler(context));
   }
 }

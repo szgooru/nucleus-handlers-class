@@ -1,6 +1,6 @@
 package org.gooru.nucleus.handlers.classes.constants;
 
-public class HttpConstants {
+public final class HttpConstants {
   public static final String HEADER_AUTH = "Authorization";
   public static final String HEADER_WWW_AUTHENTICATE = "WWW-Authenticate";
   public static final String HEADER_ACCEPT = "Accept";
@@ -30,10 +30,10 @@ public class HttpConstants {
     TOO_MANY_REQUESTS(429, "Too Many Requests"),
     ERROR(500, "Internal Server Error");
 
-    private int code;
-    private String message;
+    private final int code;
+    private final String message;
 
-    private HttpStatus(int code, String message) {
+    HttpStatus(int code, String message) {
       this.code = code;
       this.message = message;
     }
@@ -45,5 +45,9 @@ public class HttpConstants {
     public String getMessage() {
       return this.message;
     }
+  }
+
+  private HttpConstants() {
+    throw new AssertionError();
   }
 }

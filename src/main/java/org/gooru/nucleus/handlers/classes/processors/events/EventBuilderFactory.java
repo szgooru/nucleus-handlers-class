@@ -5,7 +5,7 @@ import io.vertx.core.json.JsonObject;
 /**
  * Created by ashish on 19/1/16.
  */
-public class EventBuilderFactory {
+public final class EventBuilderFactory {
 
   private static final String EVT_CLASS_CREATE = "event.class.create";
   private static final String EVT_CLASS_UPDATE = "event.class.update";
@@ -29,5 +29,9 @@ public class EventBuilderFactory {
 
   public static EventBuilder getCopyQuestionEventBuilder(String questionId) {
     return () -> new JsonObject().put(EVENT_NAME, EVT_CLASS_COPY).put(EVENT_BODY, new JsonObject().put(CLASS_ID, questionId));
+  }
+
+  private EventBuilderFactory() {
+    throw new AssertionError();
   }
 }

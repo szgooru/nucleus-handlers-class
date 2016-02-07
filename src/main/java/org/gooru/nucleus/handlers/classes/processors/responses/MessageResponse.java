@@ -10,17 +10,15 @@ import org.slf4j.LoggerFactory;
 /**
  * Created by ashish on 6/1/16.
  */
-public class MessageResponse {
+public final class MessageResponse {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(MessageResponse.class);
-  private final JsonObject response;
-  private DeliveryOptions deliveryOptions;
-  private JsonObject reply;
-  private JsonObject event;
+  private final DeliveryOptions deliveryOptions;
+  private final JsonObject reply;
+  private final JsonObject event;
 
   // Private constructor
   private MessageResponse(JsonObject response) {
-    this.response = response.copy();
     this.deliveryOptions = new DeliveryOptions().addHeader(MessageConstants.MSG_OP_STATUS, response.getString(MessageConstants.MSG_OP_STATUS));
     this.reply = response.getJsonObject(MessageConstants.RESP_CONTAINER_MBUS);
     this.event = response.getJsonObject(MessageConstants.RESP_CONTAINER_EVENT);

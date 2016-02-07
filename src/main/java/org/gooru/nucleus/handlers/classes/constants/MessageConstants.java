@@ -1,6 +1,6 @@
 package org.gooru.nucleus.handlers.classes.constants;
 
-public class MessageConstants {
+public final class MessageConstants {
 
   public static final String MSG_HEADER_OP = "mb.operation";
   public static final String MSG_HEADER_TOKEN = "session.token";
@@ -30,5 +30,9 @@ public class MessageConstants {
   public static final String RESP_CONTAINER_EVENT = "mb.event";
 
   public static final String CLASS_ID = "classId";
+
+  private MessageConstants() {
+    throw new AssertionError();
+  }
 
 }
