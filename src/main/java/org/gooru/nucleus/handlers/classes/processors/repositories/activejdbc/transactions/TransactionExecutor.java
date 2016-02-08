@@ -14,9 +14,13 @@ import java.sql.SQLException;
 /**
  * Created by ashish on 11/1/16.
  */
-public class TransactionExecutor {
+public final class TransactionExecutor {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(TransactionExecutor.class);
+
+  private TransactionExecutor() {
+    throw new AssertionError();
+  }
 
   public static MessageResponse executeTransaction(DBHandler handler) {
     // First validations without any DB
@@ -67,9 +71,5 @@ public class TransactionExecutor {
       }
       Base.close();
     }
-  }
-
-  private TransactionExecutor() {
-    throw new AssertionError();
   }
 }

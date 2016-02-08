@@ -9,6 +9,10 @@ import org.gooru.nucleus.handlers.classes.processors.events.EventBuilder;
  * Created by ashish on 6/1/16.
  */
 public final class MessageResponseFactory {
+  private MessageResponseFactory() {
+    throw new AssertionError();
+  }
+
   public static MessageResponse createInvalidRequestResponse() {
     return new MessageResponse.Builder().failed().setStatusBadRequest().build();
   }
@@ -20,7 +24,6 @@ public final class MessageResponseFactory {
   public static MessageResponse createInternalErrorResponse() {
     return new MessageResponse.Builder().failed().setStatusInternalError().build();
   }
-
 
   public static MessageResponse createInvalidRequestResponse(String message) {
     return new MessageResponse.Builder().failed().setStatusBadRequest().setResponseBody(new JsonObject().put(MessageConstants.MSG_MESSAGE, message))
@@ -64,9 +67,5 @@ public final class MessageResponseFactory {
 
   public static MessageResponse createOkayResponse(JsonObject body) {
     return new MessageResponse.Builder().successful().setStatusOkay().setResponseBody(body).build();
-  }
-
-  private MessageResponseFactory() {
-    throw new AssertionError();
   }
 }
