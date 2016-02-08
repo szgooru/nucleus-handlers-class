@@ -5,12 +5,12 @@ import org.gooru.nucleus.handlers.classes.processors.responses.ExecutionResult;
 import org.gooru.nucleus.handlers.classes.processors.responses.MessageResponse;
 
 /**
- * Created by ashish on 28/1/16.
+ * Created by ashish on 8/2/16.
  */
-class FetchClassHandler implements DBHandler {
+class FetchClassesForCourseHandler implements DBHandler {
   private final ProcessorContext context;
 
-  FetchClassHandler(ProcessorContext context) {
+  FetchClassesForCourseHandler(ProcessorContext context) {
     this.context = context;
   }
 
@@ -31,6 +31,6 @@ class FetchClassHandler implements DBHandler {
 
   @Override
   public boolean handlerReadOnly() {
-    return true;
+    return false;
   }
 }

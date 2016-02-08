@@ -13,4 +13,19 @@ public interface ClassRepo {
 
   MessageResponse fetchClass();
 
+  MessageResponse fetchClassMembers();
+
+  MessageResponse fetchClassesForCourse();
+
+  MessageResponse fetchClassesForUser();
+
+  MessageResponse joinClassByStudent();
+
+  MessageResponse inviteStudentToClass();
+
+  MessageResponse deleteClass();
+
+  MessageResponse associateCourseWithClass();
+
+  MessageResponse updateCollaboratorForClass();
 }

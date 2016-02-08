@@ -20,16 +20,27 @@ public final class MessageConstants {
   public static final String MSG_HTTP_HEADERS = "http.headers";
   public static final String MSG_MESSAGE = "message";
 
-  // Operation names: Also need to be updated in corresponding handlers
-  public static final String MSG_OP_CLASS_GET = "class.get";
+  // Class operations
   public static final String MSG_OP_CLASS_CREATE = "class.create";
   public static final String MSG_OP_CLASS_UPDATE = "class.update";
+  public static final String MSG_OP_CLASS_DELETE = "class.delete";
+  public static final String MSG_OP_CLASS_GET = "class.get";
+  public static final String MSG_OP_CLASS_MEMBERS_GET = "class.members.get";
+  public static final String MSG_OP_CLASS_COLLABORATORS_UPDATE = "class.collaborators.update";
+  public static final String MSG_OP_CLASS_LIST = "class.list";
+  public static final String MSG_OP_CLASS_LIST_FOR_COURSE = "class.list.for.course";
+  public static final String MSG_OP_CLASS_JOIN = "class.join";
+  public static final String MSG_OP_CLASS_INVITE = "class.invite.user";
+  public static final String MSG_OP_CLASS_COURSE_ASSOCIATION = "class.course.association";
+
 
   // Containers for different responses
   public static final String RESP_CONTAINER_MBUS = "mb.container";
   public static final String RESP_CONTAINER_EVENT = "mb.event";
 
   public static final String CLASS_ID = "classId";
+  public static final String COURSE_ID = "courseId";
+  public static final String STUDENT_ID = "studentId";
 
   private MessageConstants() {
     throw new AssertionError();

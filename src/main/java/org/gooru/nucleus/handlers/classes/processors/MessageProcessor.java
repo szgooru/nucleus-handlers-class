@@ -17,10 +17,13 @@ class MessageProcessor implements Processor {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(Processor.class);
   private static final ResourceBundle RESOURCE_BUNDLE = ResourceBundle.getBundle("messages");
+  private final Message<Object> message;
   private String userId;
   private JsonObject prefs;
   private JsonObject request;
-  private final Message<Object> message;
+  private String studentId;
+  private String courseId;
+
 
   public MessageProcessor(Message<Object> message) {
     this.message = message;
@@ -48,6 +51,30 @@ class MessageProcessor implements Processor {
         case MessageConstants.MSG_OP_CLASS_UPDATE:
           result = processClassUpdate();
           break;
+        case MessageConstants.MSG_OP_CLASS_COLLABORATORS_UPDATE:
+          result = updateCollaboratorForClass();
+          break;
+        case MessageConstants.MSG_OP_CLASS_COURSE_ASSOCIATION:
+          result = associateCourseWithClass();
+          break;
+        case MessageConstants.MSG_OP_CLASS_DELETE:
+          result = deleteClass();
+          break;
+        case MessageConstants.MSG_OP_CLASS_INVITE:
+          result = inviteStudentToClass();
+          break;
+        case MessageConstants.MSG_OP_CLASS_JOIN:
+          result = joinClassByStudent();
+          break;
+        case MessageConstants.MSG_OP_CLASS_LIST:
+          result = listClassesForUser();
+          break;
+        case MessageConstants.MSG_OP_CLASS_LIST_FOR_COURSE:
+          result = listClassesForCourse();
+          break;
+        case MessageConstants.MSG_OP_CLASS_MEMBERS_GET:
+          result = listClassMembers();
+          break;
         default:
           LOGGER.error("Invalid operation type passed in, not able to handle");
           return MessageResponseFactory.createInvalidRequestResponse(RESOURCE_BUNDLE.getString("invalid.operation"));
@@ -59,19 +86,81 @@ class MessageProcessor implements Processor {
     }
   }
 
+  private MessageResponse listClassMembers() {
+    ProcessorContext context = createContext();
+    if (!validateContext(context)) {
+      return MessageResponseFactory.createInvalidRequestResponse(RESOURCE_BUNDLE.getString("invalid.class"));
+    }
+    return RepoBuilder.buildClassRepo(context).fetchClassMembers();
+  }
+
+  private MessageResponse listClassesForCourse() {
+    ProcessorContext context = createContextWithCourse();
+    if (!validateContextWithCourse(context)) {
+      return MessageResponseFactory.createInvalidRequestResponse(RESOURCE_BUNDLE.getString("invalid.class.or.course"));
+    }
+    return RepoBuilder.buildClassRepo(context).fetchClassesForCourse();
+  }
+
+  private MessageResponse listClassesForUser() {
+    ProcessorContext context = createContext();
+    if (!validateContext(context)) {
+      return MessageResponseFactory.createInvalidRequestResponse(RESOURCE_BUNDLE.getString("invalid.class"));
+    }
+    return RepoBuilder.buildClassRepo(context).fetchClassesForUser();
+  }
+
+  private MessageResponse joinClassByStudent() {
+    ProcessorContext context = createContext();
+    if (!validateContext(context)) {
+      return MessageResponseFactory.createInvalidRequestResponse(RESOURCE_BUNDLE.getString("invalid.class"));
+    }
+    return RepoBuilder.buildClassRepo(context).joinClassByStudent();
+  }
+
+  private MessageResponse inviteStudentToClass() {
+    ProcessorContext context = createContext();
+    if (!validateContext(context)) {
+      return MessageResponseFactory.createInvalidRequestResponse(RESOURCE_BUNDLE.getString("invalid.class"));
+    }
+    return RepoBuilder.buildClassRepo(context).inviteStudentToClass();
+  }
+
+  private MessageResponse deleteClass() {
+    ProcessorContext context = createContext();
+    if (!validateContext(context)) {
+      return MessageResponseFactory.createInvalidRequestResponse(RESOURCE_BUNDLE.getString("invalid.class"));
+    }
+    return RepoBuilder.buildClassRepo(context).deleteClass();
+  }
+
+  private MessageResponse associateCourseWithClass() {
+    ProcessorContext context = createContextWithCourse();
+    if (!validateContextWithCourse(context)) {
+      return MessageResponseFactory.createInvalidRequestResponse(RESOURCE_BUNDLE.getString("invalid.class.or.course"));
+    }
+    return RepoBuilder.buildClassRepo(context).associateCourseWithClass();
+  }
+
+  private MessageResponse updateCollaboratorForClass() {
+    ProcessorContext context = createContext();
+    if (!validateContext(context)) {
+      return MessageResponseFactory.createInvalidRequestResponse(RESOURCE_BUNDLE.getString("invalid.class"));
+    }
+    return RepoBuilder.buildClassRepo(context).updateCollaboratorForClass();
+  }
+
   private MessageResponse processClassUpdate() {
     ProcessorContext context = createContext();
-    if (context.classId() == null || context.classId().isEmpty()) {
-      LOGGER.error("Invalid request, class id not available. Aborting");
-      return MessageResponseFactory.createInvalidRequestResponse("Invalid class id");
+    if (!validateContext(context)) {
+      return MessageResponseFactory.createInvalidRequestResponse(RESOURCE_BUNDLE.getString("invalid.class"));
     }
     return RepoBuilder.buildClassRepo(context).updateClass();
   }
 
   private MessageResponse processClassGet() {
     ProcessorContext context = createContext();
-    if (context.classId() == null || context.classId().isEmpty()) {
-      LOGGER.error("Invalid request, class id not available. Aborting");
+    if (!validateContext(context)) {
       return MessageResponseFactory.createInvalidRequestResponse(RESOURCE_BUNDLE.getString("invalid.class"));
     }
     return RepoBuilder.buildClassRepo(context).fetchClass();
@@ -79,15 +168,38 @@ class MessageProcessor implements Processor {
 
   private MessageResponse processClassCreate() {
     ProcessorContext context = createContext();
-
     return RepoBuilder.buildClassRepo(context).createClass();
   }
 
 
   private ProcessorContext createContext() {
     String classId = message.headers().get(MessageConstants.CLASS_ID);
+    return new ProcessorContext.ProcessorContextBuilder(userId, prefs, request, classId).build();
+  }
 
-    return new ProcessorContext(userId, prefs, request, classId);
+  private ProcessorContext createContextWithCourse() {
+    String classId = message.headers().get(MessageConstants.CLASS_ID);
+    String courseId = message.headers().get(MessageConstants.COURSE_ID);
+    return new ProcessorContext.ProcessorContextBuilder(userId, prefs, request, classId).setCourseId(courseId).build();
+
+  }
+
+
+  private boolean validateContextWithCourse(ProcessorContext context) {
+    if (!validateId(context.courseId())) {
+      LOGGER.error("Invalid request, course id not available/incorrect format. Aborting");
+      return false;
+    }
+    return validateContext(context);
+
+  }
+
+  private boolean validateContext(ProcessorContext context) {
+    if (!validateId(context.classId())) {
+      LOGGER.error("Invalid request, class id not available/incorrect format. Aborting");
+      return false;
+    }
+    return true;
   }
 
   private ExecutionResult<MessageResponse> validateAndInitialize() {
