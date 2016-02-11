@@ -24,20 +24,23 @@ public interface FieldValidator {
     if (o == null) {
       return false;
     }
-    try{
+    try {
       Integer.valueOf(o.toString());
-    } catch(NumberFormatException e) {
+    } catch (NumberFormatException e) {
       return false;
     }
     return true;
   }
 
-  static boolean validateDateWithFormat(Object o, DateTimeFormatter formatter) {
+  static boolean validateDateWithFormat(Object o, DateTimeFormatter formatter, boolean allowedInPast) {
     if (o == null) {
       return false;
     }
     try {
       LocalDate date = LocalDate.parse(o.toString(), formatter);
+      if (!allowedInPast) {
+        return date.isAfter(LocalDate.now());
+      }
     } catch (DateTimeParseException e) {
       return false;
     }
