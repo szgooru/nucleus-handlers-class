@@ -3,6 +3,9 @@ package org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.va
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.UUID;
 
 /**
@@ -15,6 +18,30 @@ public interface FieldValidator {
 
   static boolean validateString(Object o, int len) {
     return !(o == null || !(o instanceof String) || ((String) o).isEmpty() || (((String) o).length() > len));
+  }
+
+  static boolean validateInteger(Object o) {
+    if (o == null) {
+      return false;
+    }
+    try{
+      Integer.valueOf(o.toString());
+    } catch(NumberFormatException e) {
+      return false;
+    }
+    return true;
+  }
+
+  static boolean validateDateWithFormat(Object o, DateTimeFormatter formatter) {
+    if (o == null) {
+      return false;
+    }
+    try {
+      LocalDate date = LocalDate.parse(o.toString(), formatter);
+    } catch (DateTimeParseException e) {
+      return false;
+    }
+    return true;
   }
 
   static boolean validateJsonIfPresent(Object o) {
