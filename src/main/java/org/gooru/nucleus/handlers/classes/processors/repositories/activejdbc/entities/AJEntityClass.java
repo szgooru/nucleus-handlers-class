@@ -36,6 +36,8 @@ public class AJEntityClass extends Model {
   public static final String COLLABORATOR = "collaborator";
   public static final String COURSE_ID = "course_id";
   public static final String TABLE_COURSE = "course";
+  public static final String CREATED_AT = "created_at";
+  public static final String UPDATED_AT = "updated_at";
   public static final int CURRENT_VERSION = 3;
 
   public static final String CLASS_SHARING_TYPE_NAME = "class_sharing_type";
@@ -46,13 +48,16 @@ public class AJEntityClass extends Model {
   public static final String DELETE_QUERY =
     "select id, creator_id, end_date, course_id, gooru_version, is_archived from class where id = ?::uuid and is_deleted = false";
 
-  public static final Set<String> EDITABLE_FIELDS = new HashSet<>(
-    Arrays.asList("title", "description", "greeting", "grade", "class_sharing", "cover_image", "min_score", "end_time", "collaborator"));
+  public static final Set<String> EDITABLE_FIELDS =
+    new HashSet<>(Arrays.asList(TITLE, DESCRIPTION, GREETING, GRADE, CLASS_SHARING, COVER_IMAGE, MIN_SCORE, END_DATE, COLLABORATOR));
   public static final Set<String> CREATABLE_FIELDS = EDITABLE_FIELDS;
-  public static final Set<String> MANDATORY_FIELDS = new HashSet<>(Arrays.asList("title", "class_sharing", "min_score"));
+  public static final Set<String> MANDATORY_FIELDS = new HashSet<>(Arrays.asList(TITLE, CLASS_SHARING, MIN_SCORE));
   public static final Set<String> FORBIDDEN_FIELDS =
-    new HashSet<>(Arrays.asList("id", "created_at", "updated_at", "creator_id", "modifier_id", "is_deleted", "gooru_version", "is_archived"));
+    new HashSet<>(Arrays.asList(ID, CREATED_AT, UPDATED_AT, CREATOR_ID, MODIFIER_ID, IS_DELETED, GOORU_VERSION, IS_ARCHIVED));
   public static final Set<String> COLLABORATOR_FIELDS = new HashSet<>(Arrays.asList(COLLABORATOR));
+  public static final List<String> FETCH_QUERY_FIELD_LIST = Arrays
+    .asList(ID, CREATOR_ID, TITLE, DESCRIPTION, GREETING, GRADE, CLASS_SHARING, COVER_IMAGE, CODE, MIN_SCORE, END_DATE, COURSE_ID, COLLABORATOR,
+      GOORU_VERSION, CONTENT_VISIBILITY, IS_ARCHIVED);
 
   private static final Map<String, FieldValidator> validatorRegistry;
   private static final Map<String, FieldConverter> converterRegistry;

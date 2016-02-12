@@ -1,9 +1,14 @@
 package org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.dbhandlers;
 
+import io.vertx.core.json.JsonObject;
 import org.gooru.nucleus.handlers.classes.processors.ProcessorContext;
+import org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.entities.AJEntityClass;
+import org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.formatter.JsonFormatterBuilder;
 import org.gooru.nucleus.handlers.classes.processors.responses.ExecutionResult;
 import org.gooru.nucleus.handlers.classes.processors.responses.MessageResponse;
 import org.gooru.nucleus.handlers.classes.processors.responses.MessageResponseFactory;
+import org.javalite.activejdbc.DBException;
+import org.javalite.activejdbc.LazyList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,6 +21,7 @@ class FetchClassHandler implements DBHandler {
   private static final Logger LOGGER = LoggerFactory.getLogger(FetchClassHandler.class);
   private static final ResourceBundle RESOURCE_BUNDLE = ResourceBundle.getBundle("messages");
   private final ProcessorContext context;
+  private AJEntityClass entityClass;
 
   FetchClassHandler(ProcessorContext context) {
     this.context = context;
@@ -39,12 +45,28 @@ class FetchClassHandler implements DBHandler {
 
   @Override
   public ExecutionResult<MessageResponse> validateRequest() {
-    return null;
+    try {
+      LazyList<AJEntityClass> classes = AJEntityClass.where(AJEntityClass.FETCH_QUERY_FILTER, context.classId());
+      if (classes.isEmpty()) {
+        LOGGER.warn("Not able to find class '{}'", this.context.classId());
+        return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(RESOURCE_BUNDLE.getString("not.found")),
+          ExecutionResult.ExecutionStatus.FAILED);
+      }
+      this.entityClass = classes.get(0);
+      return new ExecutionResult<>(null, ExecutionResult.ExecutionStatus.CONTINUE_PROCESSING);
+    } catch (DBException e) {
+      LOGGER.error("Not able to fetch class from DB", e);
+      return new ExecutionResult<>(MessageResponseFactory.createInternalErrorResponse(RESOURCE_BUNDLE.getString("error.from.store")),
+        ExecutionResult.ExecutionStatus.FAILED);
+    }
   }
 
   @Override
   public ExecutionResult<MessageResponse> executeRequest() {
-    return null;
+    // FIXME: 12/2/16 Verify if we need to send student count as well here
+    JsonObject response =
+      new JsonObject(JsonFormatterBuilder.buildSimpleJsonFormatter(false, AJEntityClass.FETCH_QUERY_FIELD_LIST).toJson(this.entityClass));
+    return new ExecutionResult<>(MessageResponseFactory.createOkayResponse(response), ExecutionResult.ExecutionStatus.SUCCESSFUL);
   }
 
   @Override
