@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.SQLException;
+import java.util.ResourceBundle;
 
 /**
  * Created by ashish on 11/1/16.
@@ -17,6 +18,7 @@ import java.sql.SQLException;
 public final class TransactionExecutor {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(TransactionExecutor.class);
+  private static final ResourceBundle RESOURCE_BUNDLE = ResourceBundle.getBundle("messages");
 
   private TransactionExecutor() {
     throw new AssertionError();
@@ -59,7 +61,8 @@ public final class TransactionExecutor {
       Base.rollbackTransaction();
       LOGGER.error("Caught exception, need to rollback and abort", e);
       // Most probably we do not know what to do with this, so send internal error
-      return new ExecutionResult<>(MessageResponseFactory.createInternalErrorResponse(e.getMessage()), ExecutionResult.ExecutionStatus.FAILED);
+      return new ExecutionResult<>(MessageResponseFactory.createInternalErrorResponse(RESOURCE_BUNDLE.getString("error.from.store")),
+        ExecutionResult.ExecutionStatus.FAILED);
     } finally {
       if (handler.handlerReadOnly()) {
         // restore the settings
