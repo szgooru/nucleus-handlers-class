@@ -62,6 +62,11 @@ class DeleteClassHandler implements DBHandler {
         MessageResponseFactory.createInvalidRequestResponse(RESOURCE_BUNDLE.getString("class.archived.or.incorrect.version")),
         ExecutionResult.ExecutionStatus.FAILED);
     }
+    String courseId = this.entityClass.getString(AJEntityClass.COURSE_ID);
+    if (courseId != null && !courseId.isEmpty()) {
+      LOGGER.warn("Delete request for class '{}' which is having a course '{}'", context.classId(), courseId);
+    }
+
     return AuthorizerBuilder.buildDeleteAuthorizer(context).authorize(this.entityClass);
   }
 

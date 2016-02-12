@@ -26,10 +26,6 @@ class ClassOwnerAuthorizer implements Authorizer<AJEntityClass> {
   @Override
   public ExecutionResult<MessageResponse> authorize(AJEntityClass model) {
     String creatorId = model.getString(AJEntityClass.CREATOR_ID);
-    String courseId = model.getString(AJEntityClass.COURSE_ID);
-    if (courseId != null && !courseId.isEmpty()) {
-      LOGGER.warn("Delete request for class '{}' which is having a course '{}'", context.classId(), context.courseId());
-    }
     if (creatorId == null || creatorId.isEmpty() || !creatorId.equalsIgnoreCase(context.userId())) {
       LOGGER.warn("User '{}' is not owner of class '{}'", context.userId(), context.classId());
       return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(RESOURCE_BUNDLE.getString("not.allowed")),
