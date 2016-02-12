@@ -14,10 +14,13 @@ DONE
 * Processor layer is created which is going to take over the message processing from main verticle once message is read
 * Logging and app configuration
 * DB layer and transaction infra
+* Validators, converters etc
+* Fetch and Delete class handlers
 
 TODO
 ----
-* DB layer to actually do the operations
+* DB Handlers except for Fetch and Delete class
+* Verify if we need to serve class members' count in fetch class API
 
 To understand build related stuff, take a look at **BUILD_README.md**.
 
