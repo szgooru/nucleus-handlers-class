@@ -15,11 +15,11 @@ DONE
 * Logging and app configuration
 * DB layer and transaction infra
 * Validators, converters etc
-* Fetch and Delete class handlers
+* Fetch class, Delete class, Associate course with class, update collaborator for class handlers
 
 TODO
 ----
-* DB Handlers except for Fetch and Delete class
+* Other DB Handlers 
 * Verify if we need to serve class members' count in fetch class API
 
 To understand build related stuff, take a look at **BUILD_README.md**.
