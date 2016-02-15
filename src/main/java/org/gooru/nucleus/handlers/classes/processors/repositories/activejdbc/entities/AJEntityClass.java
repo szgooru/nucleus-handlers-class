@@ -45,6 +45,7 @@ public class AJEntityClass extends Model {
   public static final String CLASS_SHARING_TYPE_RESTRICTED = "restricted";
 
   public static final String FETCH_QUERY_FILTER = "id = ?::uuid and is_deleted = false";
+  public static final String COURSE_ASSOCIATION_FILTER = "id = ?::uuid and is_deleted = false and owner_id = ?::uuid";
   public static final String DELETE_QUERY =
     "select id, creator_id, end_date, course_id, gooru_version, is_archived from class where id = ?::uuid and is_deleted = false";
 
@@ -172,6 +173,14 @@ public class AJEntityClass extends Model {
     }
   }
 
+  public void setCourseId(String courseId) {
+    FieldConverter fc = converterRegistry.get(COURSE_ID);
+    if (fc != null) {
+      this.set(COURSE_ID, fc.convertField(courseId));
+    } else {
+      this.set(COURSE_ID, courseId);
+    }
+  }
 
   public void setIdWithConverter(String id) {
     FieldConverter fc = converterRegistry.get(ID);
