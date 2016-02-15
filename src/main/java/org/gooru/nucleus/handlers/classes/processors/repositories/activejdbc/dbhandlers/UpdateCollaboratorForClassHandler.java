@@ -72,6 +72,14 @@ class UpdateCollaboratorForClassHandler implements DBHandler {
         ExecutionResult.ExecutionStatus.FAILED);
     }
     this.entityClass = classes.get(0);
+    // Class should be of current version and Class should not be archived
+    if (!this.entityClass.isCurrentVersion() || this.entityClass.isArchived()) {
+      LOGGER.warn("Class '{}' is either archived or not of current version", context.classId());
+      return new ExecutionResult<>(
+        MessageResponseFactory.createInvalidRequestResponse(RESOURCE_BUNDLE.getString("class.archived.or.incorrect.version")),
+        ExecutionResult.ExecutionStatus.FAILED);
+    }
+
     return AuthorizerBuilder.buildUpdateCollaboratorAuthorizer(this.context).authorize(this.entityClass);
   }
 
