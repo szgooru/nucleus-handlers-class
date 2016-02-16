@@ -3,14 +3,21 @@ package org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.db
 import io.vertx.core.json.JsonObject;
 import org.gooru.nucleus.handlers.classes.constants.MessageConstants;
 import org.gooru.nucleus.handlers.classes.processors.ProcessorContext;
+import org.gooru.nucleus.handlers.classes.processors.events.EventBuilderFactory;
+import org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.dbauth.AuthorizerBuilder;
 import org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.entities.AJEntityClass;
+import org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.entitybuilders.EntityBuilder;
 import org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.validators.PayloadValidator;
+import org.gooru.nucleus.handlers.classes.processors.repositories.generators.Generator;
+import org.gooru.nucleus.handlers.classes.processors.repositories.generators.GeneratorBuilder;
 import org.gooru.nucleus.handlers.classes.processors.responses.ExecutionResult;
 import org.gooru.nucleus.handlers.classes.processors.responses.MessageResponse;
 import org.gooru.nucleus.handlers.classes.processors.responses.MessageResponseFactory;
+import org.javalite.activejdbc.DBException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Map;
 import java.util.ResourceBundle;
 
 /**
@@ -19,7 +26,9 @@ import java.util.ResourceBundle;
 class CreateClassHandler implements DBHandler {
   private static final Logger LOGGER = LoggerFactory.getLogger(CreateClassHandler.class);
   private static final ResourceBundle RESOURCE_BUNDLE = ResourceBundle.getBundle("messages");
+  private static final int RETRY_COUNT_FOR_CODE_GENERATION = 5;
   private final ProcessorContext context;
+  private AJEntityClass entityClass;
 
   CreateClassHandler(ProcessorContext context) {
     this.context = context;
@@ -51,12 +60,31 @@ class CreateClassHandler implements DBHandler {
 
   @Override
   public ExecutionResult<MessageResponse> validateRequest() {
-    return null;
+    // Pass through here, no validations from DB side
+    return AuthorizerBuilder.buildCreateClassAuthorizer(this.context).authorize(null);
   }
 
   @Override
   public ExecutionResult<MessageResponse> executeRequest() {
-    return null;
+    this.entityClass = new AJEntityClass();
+    if (!populateClassCode()) {
+      return new ExecutionResult<>(MessageResponseFactory.createInternalErrorResponse(RESOURCE_BUNDLE.getString("class.code.generation.failure")),
+        ExecutionResult.ExecutionStatus.FAILED);
+    }
+    autoPopulate();
+
+    boolean result = this.entityClass.save();
+    if (!result) {
+      LOGGER.error("Class for user '{}' failed to create", context.userId());
+      if (this.entityClass.hasErrors()) {
+        Map<String, String> map = this.entityClass.errors();
+        JsonObject errors = new JsonObject();
+        map.forEach(errors::put);
+        return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(errors), ExecutionResult.ExecutionStatus.FAILED);
+      }
+    }
+    return new ExecutionResult<>(MessageResponseFactory.createCreatedResponse(this.entityClass.getId().toString(),
+      EventBuilderFactory.getCreateClassEventBuilder(this.entityClass.getString(AJEntityClass.ID))), ExecutionResult.ExecutionStatus.SUCCESSFUL);
   }
 
   @Override
@@ -64,6 +92,52 @@ class CreateClassHandler implements DBHandler {
     return false;
   }
 
+  private void autoPopulate() {
+    // Need to populate modifier id, creator id, version. Note that "code" is already done at higher level to enable exception handling
+    this.entityClass.setModifierId(this.context.userId());
+    this.entityClass.setCreatorId(this.context.userId());
+    this.entityClass.setVersion();
+    // Now we hydrate model from payload
+    new DefaultAJEntityClassBuilder().build(this.entityClass, this.context.request(), AJEntityClass.getConverterRegistry());
+  }
+
+  private boolean populateClassCode() {
+    Generator<String> generator = GeneratorBuilder.buildClassCodeGenerator();
+    String resultCode;
+    boolean done = false;
+    int retries = 0;
+    for (retries = 0; retries < RETRY_COUNT_FOR_CODE_GENERATION; retries++) {
+      resultCode = generator.generate();
+      if (checkUniqueness(resultCode)) {
+        done = true;
+        break;
+      }
+    }
+    if (done) {
+      LOGGER.info("Class code generation took '{}' retries", retries);
+      return true;
+    } else {
+      LOGGER.warn("Not able to generate unique class code for user '{}'", context.userId());
+      return false;
+    }
+
+  }
+
+  private boolean checkUniqueness(String resultCode) {
+    try {
+      Long count = AJEntityClass.count(AJEntityClass.CODE_UNIQUENESS_QUERY, resultCode);
+      return count == 0;
+    } catch (DBException e) {
+      // Since this is read only query, there may not be an impact on the connection state (like in integrity constraints violations). So we
+      // continue to retry and eat up exception after logging
+      LOGGER.error("Error checking unique code for user '{user}' and code '{}'", context.userId(), resultCode, e);
+    }
+    return false;
+  }
+
   private static class DefaultPayloadValidator implements PayloadValidator {
+  }
+
+  private static class DefaultAJEntityClassBuilder implements EntityBuilder<AJEntityClass> {
   }
 }
