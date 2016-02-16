@@ -32,7 +32,7 @@ class AssociateCourseWithClassHandler implements DBHandler {
 
   @Override
   public ExecutionResult<MessageResponse> checkSanity() {
-    // There should be an class id present
+    // There should be a class id present
     if (context.classId() == null || context.classId().isEmpty() || context.courseId() == null || context.courseId().isEmpty()) {
       LOGGER.warn("Missing class/course id");
       return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse(RESOURCE_BUNDLE.getString("invalid.class.or.course")),

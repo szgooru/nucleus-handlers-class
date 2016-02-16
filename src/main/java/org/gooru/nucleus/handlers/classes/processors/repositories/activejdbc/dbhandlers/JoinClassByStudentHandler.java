@@ -27,7 +27,7 @@ class JoinClassByStudentHandler implements DBHandler {
 
   @Override
   public ExecutionResult<MessageResponse> checkSanity() {
-    // There should be an class id present
+    // There should be a class id present
     if (context.classId() == null || context.classId().isEmpty()) {
       LOGGER.warn("Missing class");
       return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse(RESOURCE_BUNDLE.getString("missing.class.id")),
