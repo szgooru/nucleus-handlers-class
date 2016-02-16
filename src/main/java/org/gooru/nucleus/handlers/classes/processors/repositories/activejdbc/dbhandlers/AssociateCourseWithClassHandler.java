@@ -56,7 +56,7 @@ class AssociateCourseWithClassHandler implements DBHandler {
 
   @Override
   public ExecutionResult<MessageResponse> validateRequest() {
-    LazyList<AJEntityClass> classes = Model.where(AJEntityClass.FETCH_QUERY_FILTER, context.classId());
+    LazyList<AJEntityClass> classes = AJEntityClass.where(AJEntityClass.FETCH_QUERY_FILTER, context.classId());
     if (classes.isEmpty()) {
       LOGGER.warn("Not able to find class '{}'", this.context.classId());
       return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(RESOURCE_BUNDLE.getString("not.found")),
