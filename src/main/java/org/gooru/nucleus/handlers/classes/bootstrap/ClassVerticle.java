@@ -8,6 +8,7 @@ import org.gooru.nucleus.handlers.classes.bootstrap.shutdown.Finalizer;
 import org.gooru.nucleus.handlers.classes.bootstrap.shutdown.Finalizers;
 import org.gooru.nucleus.handlers.classes.bootstrap.startup.Initializer;
 import org.gooru.nucleus.handlers.classes.bootstrap.startup.Initializers;
+import org.gooru.nucleus.handlers.classes.constants.MessageConstants;
 import org.gooru.nucleus.handlers.classes.constants.MessagebusEndpoints;
 import org.gooru.nucleus.handlers.classes.processors.ProcessorBuilder;
 import org.gooru.nucleus.handlers.classes.processors.responses.MessageResponse;
@@ -50,6 +51,12 @@ public class ClassVerticle extends AbstractVerticle {
 
         JsonObject eventData = result.event();
         if (eventData != null) {
+          String sessionToken = ((JsonObject) message.body()).getString(MessageConstants.MSG_HEADER_TOKEN);
+          if (sessionToken != null && !sessionToken.isEmpty()) {
+            eventData.put(MessageConstants.MSG_HEADER_TOKEN, sessionToken);
+          } else {
+            LOGGER.warn("Invalid session token received");
+          }
           eb.publish(MessagebusEndpoints.MBEP_EVENT, eventData);
         }
       });
