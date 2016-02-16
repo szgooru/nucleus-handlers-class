@@ -48,6 +48,7 @@ public class AJEntityClass extends Model {
   public static final String COURSE_ASSOCIATION_FILTER = "id = ?::uuid and is_deleted = false and owner_id = ?::uuid";
   public static final String DELETE_QUERY =
     "select id, creator_id, end_date, course_id, gooru_version, is_archived from class where id = ?::uuid and is_deleted = false";
+  public static final String CODE_UNIQUENESS_QUERY = "code = ?";
 
   public static final Set<String> EDITABLE_FIELDS =
     new HashSet<>(Arrays.asList(TITLE, DESCRIPTION, GREETING, GRADE, CLASS_SHARING, COVER_IMAGE, MIN_SCORE, END_DATE, COLLABORATOR));
@@ -98,11 +99,6 @@ public class AJEntityClass extends Model {
     validatorMap.put(COURSE_ID, (value -> FieldValidator.validateUuidIfPresent(value.toString())));
     validatorMap.put(COLLABORATOR, (value) -> FieldValidator.validateDeepJsonArrayIfPresent(value, FieldValidator::validateUuid));
     return Collections.unmodifiableMap(validatorMap);
-  }
-
-
-  public static FieldSelector associateCourseFieldSelector() {
-    throw new RuntimeException("Not implemented");
   }
 
   public static FieldSelector createFieldSelector() {
@@ -197,6 +193,10 @@ public class AJEntityClass extends Model {
 
   public boolean isArchived() {
     return this.getBoolean(IS_ARCHIVED);
+  }
+
+  public void setVersion() {
+    this.set(GOORU_VERSION, CURRENT_VERSION);
   }
 
   private static class ClassValidationRegistry implements ValidatorRegistry {
