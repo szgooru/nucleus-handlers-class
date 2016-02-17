@@ -179,7 +179,7 @@ public final class MessageResponse {
         case MessageConstants.MSG_OP_STATUS_ERROR:
           result.put(MessageConstants.MSG_HTTP_ERROR, responseBody);
           break;
-        case MessageConstants.MSG_HTTP_VALIDATION_ERROR:
+        case MessageConstants.MSG_OP_STATUS_VALIDATION_ERROR:
           result.put(MessageConstants.MSG_HTTP_VALIDATION_ERROR, responseBody);
           break;
       }
