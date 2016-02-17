@@ -40,13 +40,14 @@ public class ClassVerticle extends AbstractVerticle {
 
     eb.consumer(MessagebusEndpoints.MBEP_CLASS, message -> {
 
-      LOGGER.debug("Received message: " + message.body());
+      LOGGER.debug("Received message: '{}'", message.body());
 
       vertx.executeBlocking(future -> {
         MessageResponse result = ProcessorBuilder.build(message).process();
         future.complete(result);
       }, res -> {
         MessageResponse result = (MessageResponse) res.result();
+        LOGGER.debug("Sending response: '{}'", result.reply());
         message.reply(result.reply(), result.deliveryOptions());
 
         JsonObject eventData = result.event();
