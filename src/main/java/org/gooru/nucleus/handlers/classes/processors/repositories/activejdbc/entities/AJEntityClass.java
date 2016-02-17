@@ -73,14 +73,14 @@ public class AJEntityClass extends Model {
   private static Map<String, FieldConverter> initializeConverters() {
     Map<String, FieldConverter> converterMap = new HashMap<>();
     converterMap.put(ID, (fieldValue -> FieldConverter.convertFieldToUuid((String) fieldValue)));
-    converterMap.put(GRADE, (fieldValue -> FieldConverter.convertFieldToJson(fieldValue.toString())));
-    converterMap.put(END_DATE, (fieldValue -> FieldConverter.convertFieldToDateWithFormat(fieldValue.toString(), DateTimeFormatter.ISO_LOCAL_DATE)));
-    converterMap.put(CONTENT_VISIBILITY, (fieldValue -> FieldConverter.convertFieldToJson(fieldValue.toString())));
+    converterMap.put(GRADE, (FieldConverter::convertFieldToJson));
+    converterMap.put(END_DATE, (fieldValue -> FieldConverter.convertFieldToDateWithFormat(fieldValue, DateTimeFormatter.ISO_LOCAL_DATE)));
+    converterMap.put(CONTENT_VISIBILITY, (FieldConverter::convertFieldToJson));
     converterMap.put(CREATOR_ID, (fieldValue -> FieldConverter.convertFieldToUuid((String) fieldValue)));
     converterMap.put(MODIFIER_ID, (fieldValue -> FieldConverter.convertFieldToUuid((String) fieldValue)));
     converterMap.put(COURSE_ID, (fieldValue -> FieldConverter.convertFieldToUuid((String) fieldValue)));
-    converterMap.put(CLASS_SHARING, (fieldValue -> FieldConverter.convertFieldToNamedType((String) fieldValue, CLASS_SHARING_TYPE_NAME)));
-    converterMap.put(COLLABORATOR, (fieldValue -> FieldConverter.convertFieldToJson(fieldValue.toString())));
+    converterMap.put(CLASS_SHARING, (fieldValue -> FieldConverter.convertFieldToNamedType(fieldValue, CLASS_SHARING_TYPE_NAME)));
+    converterMap.put(COLLABORATOR, (FieldConverter::convertFieldToJson));
     return Collections.unmodifiableMap(converterMap);
   }
 
@@ -90,13 +90,13 @@ public class AJEntityClass extends Model {
     validatorMap.put(TITLE, (value) -> FieldValidator.validateString(value, 5000));
     validatorMap.put(DESCRIPTION, (value) -> FieldValidator.validateStringIfPresent(value, 5000));
     validatorMap.put(GREETING, (value) -> FieldValidator.validateStringIfPresent(value, 5000));
-    validatorMap.put(GRADE, FieldValidator::validateJsonIfPresent);
+    validatorMap.put(GRADE, FieldValidator::validateJsonArrayIfPresent);
     validatorMap.put(CLASS_SHARING, (value) -> (value != null && value instanceof String &&
       (CLASS_SHARING_TYPE_OPEN.equalsIgnoreCase((String) value) || CLASS_SHARING_TYPE_RESTRICTED.equalsIgnoreCase((String) value))));
     validatorMap.put(COVER_IMAGE, (value) -> FieldValidator.validateStringIfPresent(value, 2000));
     validatorMap.put(MIN_SCORE, (FieldValidator::validateInteger));
     validatorMap.put(END_DATE, (value -> FieldValidator.validateDateWithFormat(value, DateTimeFormatter.ISO_LOCAL_DATE, false)));
-    validatorMap.put(COURSE_ID, (value -> FieldValidator.validateUuidIfPresent(value.toString())));
+    validatorMap.put(COURSE_ID, (value -> FieldValidator.validateUuidIfPresent((String)value)));
     validatorMap.put(COLLABORATOR, (value) -> FieldValidator.validateDeepJsonArrayIfPresent(value, FieldValidator::validateUuid));
     return Collections.unmodifiableMap(validatorMap);
   }
