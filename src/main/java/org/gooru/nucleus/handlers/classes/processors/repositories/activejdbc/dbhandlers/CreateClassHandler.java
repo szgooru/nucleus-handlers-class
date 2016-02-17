@@ -103,24 +103,18 @@ class CreateClassHandler implements DBHandler {
 
   private boolean populateClassCode() {
     Generator<String> generator = GeneratorBuilder.buildClassCodeGenerator();
-    String resultCode;
-    boolean done = false;
+    String resultCode = null;
     int retries = 0;
     for (retries = 0; retries < RETRY_COUNT_FOR_CODE_GENERATION; retries++) {
       resultCode = generator.generate();
       if (checkUniqueness(resultCode)) {
-        done = true;
-        break;
+        LOGGER.info("Class code generation took '{}' retries", retries);
+        this.entityClass.set(AJEntityClass.CODE, resultCode);
+        return true;
       }
     }
-    if (done) {
-      LOGGER.info("Class code generation took '{}' retries", retries);
-      return true;
-    } else {
-      LOGGER.warn("Not able to generate unique class code for user '{}'", context.userId());
-      return false;
-    }
-
+    LOGGER.warn("Not able to generate unique class code for user '{}'", context.userId());
+    return false;
   }
 
   private boolean checkUniqueness(String resultCode) {
