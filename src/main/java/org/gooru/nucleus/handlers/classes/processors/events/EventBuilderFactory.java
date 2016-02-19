@@ -10,7 +10,6 @@ public final class EventBuilderFactory {
   private static final String EVT_CLASS_CREATE = "event.class.create";
   private static final String EVT_CLASS_UPDATE = "event.class.update";
   private static final String EVT_CLASS_DELETE = "event.class.delete";
-  private static final String EVT_CLASS_COPY = "event.class.copy";
   private static final String EVENT_NAME = "event.name";
   private static final String EVENT_BODY = "event.body";
   private static final String CLASS_ID = "id";
