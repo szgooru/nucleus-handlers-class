@@ -12,8 +12,9 @@ public final class ProcessorContext {
   private final JsonObject request;
   private final String classId;
   private final String courseId;
+  private final String classCode;
 
-  private ProcessorContext(String userId, JsonObject prefs, JsonObject request, String classId, String courseId) {
+  private ProcessorContext(String userId, JsonObject prefs, JsonObject request, String classId, String courseId, String classCode) {
     if (prefs == null || userId == null || prefs.isEmpty()) {
       throw new IllegalStateException("Processor Context creation failed because of invalid values");
     }
@@ -22,6 +23,7 @@ public final class ProcessorContext {
     this.prefs = prefs.copy();
     this.request = request != null ? request.copy() : null;
     this.classId = classId;
+    this.classCode = classCode;
   }
 
   public String userId() {
@@ -44,15 +46,20 @@ public final class ProcessorContext {
     return this.courseId;
   }
 
+  public String classCode() {
+    return this.classCode;
+  }
+
   public static class ProcessorContextBuilder {
     private final String userId;
     private final JsonObject prefs;
     private final JsonObject request;
     private final String classId;
     private String courseId;
+    private final String classCode;
     private boolean built = false;
 
-    ProcessorContextBuilder(String userId, JsonObject prefs, JsonObject request, String classId) {
+    ProcessorContextBuilder(String userId, JsonObject prefs, JsonObject request, String classId, String classCode) {
       if (prefs == null || userId == null || prefs.isEmpty()) {
         throw new IllegalStateException("Processor Context creation failed because of invalid values");
       }
@@ -60,6 +67,7 @@ public final class ProcessorContext {
       this.prefs = prefs.copy();
       this.request = request != null ? request.copy() : null;
       this.classId = classId;
+      this.classCode = classCode;
     }
 
     ProcessorContextBuilder setCourseId(String courseId) {
@@ -75,7 +83,7 @@ public final class ProcessorContext {
         throw new IllegalStateException("Tried to build again");
       } else {
         this.built = true;
-        return new ProcessorContext(userId, prefs, request, classId, courseId);
+        return new ProcessorContext(userId, prefs, request, classId, courseId, classCode);
       }
     }
   }

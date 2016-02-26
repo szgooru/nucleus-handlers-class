@@ -174,13 +174,15 @@ class MessageProcessor implements Processor {
 
   private ProcessorContext createContext() {
     String classId = message.headers().get(MessageConstants.CLASS_ID);
-    return new ProcessorContext.ProcessorContextBuilder(userId, prefs, request, classId).build();
+    String classCode = message.headers().get(MessageConstants.CLASS_CODE);
+    return new ProcessorContext.ProcessorContextBuilder(userId, prefs, request, classId, classCode).build();
   }
 
   private ProcessorContext createContextWithCourse() {
     String classId = message.headers().get(MessageConstants.CLASS_ID);
     String courseId = message.headers().get(MessageConstants.COURSE_ID);
-    return new ProcessorContext.ProcessorContextBuilder(userId, prefs, request, classId).setCourseId(courseId).build();
+    String classCode = message.headers().get(MessageConstants.CLASS_CODE);
+    return new ProcessorContext.ProcessorContextBuilder(userId, prefs, request, classId, classCode).setCourseId(courseId).build();
 
   }
 

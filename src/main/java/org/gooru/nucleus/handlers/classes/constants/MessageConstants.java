@@ -41,6 +41,7 @@ public final class MessageConstants {
   public static final String CLASS_ID = "classId";
   public static final String COURSE_ID = "courseId";
   public static final String STUDENT_ID = "studentId";
+  public static final String CLASS_CODE = "classCode";
 
   private MessageConstants() {
     throw new AssertionError();
