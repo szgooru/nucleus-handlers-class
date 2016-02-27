@@ -38,6 +38,8 @@ public class AJEntityClass extends Model {
   public static final String TABLE_COURSE = "course";
   public static final String CREATED_AT = "created_at";
   public static final String UPDATED_AT = "updated_at";
+  public static final String CREATOR_SYSTEM = "creator_system";
+  public static final String ROSTER_ID = "roster_id";
   public static final int CURRENT_VERSION = 3;
 
   public static final String CLASS_SHARING_TYPE_NAME = "class_sharing_type";
@@ -45,6 +47,7 @@ public class AJEntityClass extends Model {
   public static final String CLASS_SHARING_TYPE_RESTRICTED = "restricted";
 
   public static final String FETCH_QUERY_FILTER = "id = ?::uuid and is_deleted = false";
+  public static final String FETCH_VIA_CODE_FILTER = "code = ? and is_deleted = false";
   public static final String COURSE_ASSOCIATION_FILTER = "id = ?::uuid and is_deleted = false and owner_id = ?::uuid";
   public static final String DELETE_QUERY =
     "select id, creator_id, end_date, course_id, gooru_version, is_archived from class where id = ?::uuid and is_deleted = false";
@@ -52,7 +55,8 @@ public class AJEntityClass extends Model {
 
   public static final Set<String> EDITABLE_FIELDS =
     new HashSet<>(Arrays.asList(TITLE, DESCRIPTION, GREETING, GRADE, CLASS_SHARING, COVER_IMAGE, MIN_SCORE, END_DATE, COLLABORATOR));
-  public static final Set<String> CREATABLE_FIELDS = EDITABLE_FIELDS;
+  public static final Set<String> CREATABLE_FIELDS = new HashSet<>(
+    Arrays.asList(TITLE, DESCRIPTION, GREETING, GRADE, CLASS_SHARING, COVER_IMAGE, MIN_SCORE, END_DATE, COLLABORATOR, CREATOR_SYSTEM, ROSTER_ID));
   public static final Set<String> MANDATORY_FIELDS = new HashSet<>(Arrays.asList(TITLE, CLASS_SHARING, MIN_SCORE));
   public static final Set<String> FORBIDDEN_FIELDS =
     new HashSet<>(Arrays.asList(ID, CREATED_AT, UPDATED_AT, CREATOR_ID, MODIFIER_ID, IS_DELETED, GOORU_VERSION, IS_ARCHIVED));
@@ -98,6 +102,8 @@ public class AJEntityClass extends Model {
     validatorMap.put(END_DATE, (value -> FieldValidator.validateDateWithFormat(value, DateTimeFormatter.ISO_LOCAL_DATE, false)));
     validatorMap.put(COURSE_ID, (value -> FieldValidator.validateUuidIfPresent((String)value)));
     validatorMap.put(COLLABORATOR, (value) -> FieldValidator.validateDeepJsonArrayIfPresent(value, FieldValidator::validateUuid));
+    validatorMap.put(CREATOR_SYSTEM, (value) -> FieldValidator.validateStringIfPresent(value, 255));
+    validatorMap.put(ROSTER_ID, (value) -> FieldValidator.validateStringIfPresent(value, 512));
     return Collections.unmodifiableMap(validatorMap);
   }
 
