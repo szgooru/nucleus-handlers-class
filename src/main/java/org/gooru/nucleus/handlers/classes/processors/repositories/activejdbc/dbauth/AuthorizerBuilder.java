@@ -1,6 +1,7 @@
 package org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.dbauth;
 
 import org.gooru.nucleus.handlers.classes.processors.ProcessorContext;
+import org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.entities.AJClassMember;
 import org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.entities.AJEntityClass;
 import org.gooru.nucleus.handlers.classes.processors.responses.ExecutionResult;
 
@@ -45,8 +46,8 @@ public final class AuthorizerBuilder {
     return new ClassOwnerOrCollaboratorAuthorizer(context);
   }
 
-  public static Authorizer<AJEntityClass> buildJoinClassByStudentAuthorizer(ProcessorContext context) {
-    return new OpenClassOrInvitedStudentAuthorizer(context);
+  public static Authorizer<AJEntityClass> buildJoinClassByStudentAuthorizer(ProcessorContext context, AJClassMember membership) {
+    return new OpenClassOrInvitedStudentAuthorizer(context, membership);
   }
 
   public static Authorizer<AJEntityClass> buildUpdateClassAuthorizer(ProcessorContext context) {
