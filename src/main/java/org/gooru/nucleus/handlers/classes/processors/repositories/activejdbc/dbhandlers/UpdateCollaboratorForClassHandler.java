@@ -100,7 +100,7 @@ class UpdateCollaboratorForClassHandler implements DBHandler {
       }
     }
     return new ExecutionResult<>(MessageResponseFactory
-      .createNoContentResponse(RESOURCE_BUNDLE.getString("updated"), EventBuilderFactory.getUpdateClassEventBuilder(context.classId())),
+      .createNoContentResponse(RESOURCE_BUNDLE.getString("updated"), EventBuilderFactory.getCollaboratorUpdatedEventBuilder(context.classId())),
       ExecutionResult.ExecutionStatus.SUCCESSFUL);
   }
 

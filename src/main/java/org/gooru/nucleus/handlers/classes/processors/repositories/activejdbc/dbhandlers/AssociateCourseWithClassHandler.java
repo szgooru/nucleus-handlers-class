@@ -83,7 +83,7 @@ class AssociateCourseWithClassHandler implements DBHandler {
   @Override
   public ExecutionResult<MessageResponse> executeRequest() {
     // Set the modifier id and course id
-    this.entityClass.setModifierId(context.userId());
+    this.entityClass.setModifierId(this.context.userId());
     this.entityClass.setCourseId(this.context.courseId());
 
     boolean result = this.entityClass.save();
@@ -96,8 +96,8 @@ class AssociateCourseWithClassHandler implements DBHandler {
         return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(errors), ExecutionResult.ExecutionStatus.FAILED);
       }
     }
-    return new ExecutionResult<>(MessageResponseFactory
-      .createNoContentResponse(RESOURCE_BUNDLE.getString("updated"), EventBuilderFactory.getUpdateClassEventBuilder(context.classId())),
+    return new ExecutionResult<>(MessageResponseFactory.createNoContentResponse(RESOURCE_BUNDLE.getString("updated"),
+      EventBuilderFactory.getCourseAssignedEventBuilder(this.context.classId(), this.context.courseId())),
       ExecutionResult.ExecutionStatus.SUCCESSFUL);
   }
 
