@@ -6,7 +6,6 @@ import org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.ent
 import org.gooru.nucleus.handlers.classes.processors.responses.ExecutionResult;
 import org.gooru.nucleus.handlers.classes.processors.responses.MessageResponse;
 import org.gooru.nucleus.handlers.classes.processors.responses.MessageResponseFactory;
-import org.javalite.activejdbc.LazyList;
 
 import java.util.ResourceBundle;
 

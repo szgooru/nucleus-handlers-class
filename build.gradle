@@ -27,7 +27,7 @@ if (!JavaVersion.current().java8Compatible) {
 // Note that this applies only to dependencies and not to the plugins and build
 ext {
     vertxVersion = '3.2.1'
-    slf4jVersion ='1.7.12'
+    slf4jVersion = '1.7.12'
     junitVersion = '4.12'
     logbackVersion = '1.0.13'
     hikariVersion = '2.4.3'
@@ -58,8 +58,6 @@ dependencies {
     compile 'org.javalite:activejdbc:1.4.11'
     compile 'org.javalite:activejdbc-instrumentation:1.4.11'
 
-
-
     // Test dependencies
     testCompile "junit:junit:${junitVersion}"
 }
@@ -69,7 +67,7 @@ shadowJar {
     manifest {
         attributes 'Main-Class': 'io.vertx.core.Launcher'
         attributes 'Main-Verticle': 'org.gooru.nucleus.handlers.classes.bootstrap.ClassVerticle'
-        attributes 'Created-By' : 'Gooru.org'
+        attributes 'Created-By': 'Gooru.org'
     }
 }
 
@@ -78,30 +76,34 @@ task wrapper(type: Wrapper) {
 }
 
 // from the Griffon ActiveJDBC plugin
-def addUrlIfNotPresent( to, what ) {
+def addUrlIfNotPresent(to, what) {
 
-    if ( !to || !what ) { return }
+    if (!to || !what) {
+        return
+    }
     def urls = to.URLs.toList()
-    switch( what.class ) {
-        case URL: what = new File( what.toURI() ); break
-        case String: what = new File( what ); break
-        case GString: what = new File( what.toString() ); break
+    switch (what.class) {
+        case URL: what = new File(what.toURI()); break
+        case String: what = new File(what); break
+        case GString: what = new File(what.toString()); break
         case File: break; // ok
         default:
             println "Don't know how to deal with $what as it is not an URL nor a File"
-            System.exit( 1 )
+            System.exit(1)
     }
 
-    if ( what.directory && !what.exists() ) { what.mkdirs() }
+    if (what.directory && !what.exists()) {
+        what.mkdirs()
+    }
     def url = what.toURI().toURL()
-    if ( !urls.contains( url ) && ( what.directory || !urls.find{ it.path.endsWith( what.name ) } ) ) {
-        to.addURL( url )
+    if (!urls.contains(url) && (what.directory || !urls.find { it.path.endsWith(what.name) })) {
+        to.addURL(url)
     }
 }
 
 // from the Griffon ActiveJDBC plugin
 compileJava.doLast {
-    println( "In compileJava.doLast" )
+    println("In compileJava.doLast")
     Instrumentation instrumentation = new Instrumentation()
     def projectMainClassesDir = sourceSets.main.output.classesDir.getPath()
     def rootLoader = this.class.classLoader.rootLoader
@@ -109,6 +111,6 @@ compileJava.doLast {
     addUrlIfNotPresent rootLoader, projectMainClassesDir
     addUrlIfNotPresent Instrumentation.class.classLoader, projectMainClassesDir
     instrumentation.instrument()
-    def activejdbcInstrumentSpyFile = new File( ".activejdbc_instrument" )
+    def activejdbcInstrumentSpyFile = new File(".activejdbc_instrument")
     activejdbcInstrumentSpyFile.text = new Date().toString()
 }

@@ -12,7 +12,6 @@ import org.gooru.nucleus.handlers.classes.processors.responses.ExecutionResult;
 import org.gooru.nucleus.handlers.classes.processors.responses.MessageResponse;
 import org.gooru.nucleus.handlers.classes.processors.responses.MessageResponseFactory;
 import org.javalite.activejdbc.LazyList;
-import org.javalite.activejdbc.Model;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
