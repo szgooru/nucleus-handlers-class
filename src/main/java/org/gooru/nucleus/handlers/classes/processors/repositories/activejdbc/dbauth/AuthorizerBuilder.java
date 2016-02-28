@@ -23,8 +23,8 @@ public final class AuthorizerBuilder {
   }
 
   public static Authorizer<AJEntityClass> buildFetchClassesForCourseAuthorizer(ProcessorContext context) {
-    // As long as session token is valid and user is not anonymous, which is the case as we are, we should be fine
-    return model -> new ExecutionResult<>(null, ExecutionResult.ExecutionStatus.CONTINUE_PROCESSING);
+    // Course owner should be calling this API
+    return new CourseOwnerAuthorizer(context);
   }
 
   public static Authorizer<AJEntityClass> buildFetchClassesForUserAuthorizer(ProcessorContext context) {
