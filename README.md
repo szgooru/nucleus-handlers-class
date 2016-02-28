@@ -15,7 +15,7 @@ DONE
 * Logging and app configuration
 * DB layer and transaction infra
 * Validators, converters etc
-* Fetch class, Delete class, Associate course with class, update collaborator for class, create class, update class handlers
+* Fetch class, Delete class, Associate course with class, update collaborator for class, create class, update class, join class by student, invite students to class handlers
 
 TODO
 ----
