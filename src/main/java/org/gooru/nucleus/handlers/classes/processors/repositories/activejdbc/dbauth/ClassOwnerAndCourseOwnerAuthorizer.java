@@ -20,7 +20,7 @@ class ClassOwnerAndCourseOwnerAuthorizer implements Authorizer<AJEntityClass> {
   private static final ResourceBundle RESOURCE_BUNDLE = ResourceBundle.getBundle("messages");
   private final ProcessorContext context;
 
-  public ClassOwnerAndCourseOwnerAuthorizer(ProcessorContext context) {
+  ClassOwnerAndCourseOwnerAuthorizer(ProcessorContext context) {
     this.context = context;
   }
 

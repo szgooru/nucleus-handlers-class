@@ -15,7 +15,7 @@ import java.util.ResourceBundle;
 /**
  * Created by ashish on 28/2/16.
  */
-public class CourseOwnerAuthorizer implements Authorizer<AJEntityClass> {
+class CourseOwnerAuthorizer implements Authorizer<AJEntityClass> {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ClassOwnerAndCourseOwnerAuthorizer.class);
   private static final ResourceBundle RESOURCE_BUNDLE = ResourceBundle.getBundle("messages");

@@ -17,7 +17,7 @@ class OpenClassOrInvitedStudentAuthorizer implements Authorizer<AJEntityClass> {
   private final ProcessorContext context;
   private final AJClassMember membership;
 
-  public OpenClassOrInvitedStudentAuthorizer(ProcessorContext context, AJClassMember membership) {
+  OpenClassOrInvitedStudentAuthorizer(ProcessorContext context, AJClassMember membership) {
     this.context = context;
     this.membership = membership;
   }
