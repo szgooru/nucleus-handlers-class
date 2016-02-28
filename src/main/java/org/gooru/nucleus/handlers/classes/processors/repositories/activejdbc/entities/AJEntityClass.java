@@ -41,6 +41,7 @@ public class AJEntityClass extends Model {
   public static final String CREATOR_SYSTEM = "creator_system";
   public static final String ROSTER_ID = "roster_id";
   public static final int CURRENT_VERSION = 3;
+  public static final String INVITEES = "invitees";
 
   public static final String CLASS_SHARING_TYPE_NAME = "class_sharing_type";
   public static final String CLASS_SHARING_TYPE_OPEN = "open";
@@ -61,6 +62,8 @@ public class AJEntityClass extends Model {
   public static final Set<String> FORBIDDEN_FIELDS =
     new HashSet<>(Arrays.asList(ID, CREATED_AT, UPDATED_AT, CREATOR_ID, MODIFIER_ID, IS_DELETED, GOORU_VERSION, IS_ARCHIVED));
   public static final Set<String> COLLABORATOR_FIELDS = new HashSet<>(Arrays.asList(COLLABORATOR));
+  public static final Set<String> INVITE_MANDATORY_FIELDS = new HashSet<>(Arrays.asList(INVITEES));
+  public static final Set<String> INVITE_ALLOWED_FIELDS = new HashSet<>(Arrays.asList(INVITEES, CREATOR_SYSTEM));
   public static final List<String> FETCH_QUERY_FIELD_LIST = Arrays
     .asList(ID, CREATOR_ID, TITLE, DESCRIPTION, GREETING, GRADE, CLASS_SHARING, COVER_IMAGE, CODE, MIN_SCORE, END_DATE, COURSE_ID, COLLABORATOR,
       GOORU_VERSION, CONTENT_VISIBILITY, IS_ARCHIVED);
@@ -101,10 +104,11 @@ public class AJEntityClass extends Model {
     validatorMap.put(COVER_IMAGE, (value) -> FieldValidator.validateStringIfPresent(value, 2000));
     validatorMap.put(MIN_SCORE, (FieldValidator::validateInteger));
     validatorMap.put(END_DATE, (value -> FieldValidator.validateDateWithFormat(value, DateTimeFormatter.ISO_LOCAL_DATE, false)));
-    validatorMap.put(COURSE_ID, (value -> FieldValidator.validateUuidIfPresent((String)value)));
+    validatorMap.put(COURSE_ID, (value -> FieldValidator.validateUuidIfPresent((String) value)));
     validatorMap.put(COLLABORATOR, (value) -> FieldValidator.validateDeepJsonArrayIfPresent(value, FieldValidator::validateUuid));
     validatorMap.put(CREATOR_SYSTEM, (value) -> FieldValidator.validateStringIfPresent(value, 255));
     validatorMap.put(ROSTER_ID, (value) -> FieldValidator.validateStringIfPresent(value, 512));
+    validatorMap.put(INVITEES, (value) -> FieldValidator.validateDeepJsonArrayIfPresent(value, FieldValidator::validateUuid));
     return Collections.unmodifiableMap(validatorMap);
   }
 
@@ -123,7 +127,17 @@ public class AJEntityClass extends Model {
   }
 
   public static FieldSelector inviteStudentFieldSelector() {
-    throw new RuntimeException("Not implemented");
+    return new FieldSelector() {
+      @Override
+      public Set<String> mandatoryFields() {
+        return Collections.unmodifiableSet(INVITE_MANDATORY_FIELDS);
+      }
+
+      @Override
+      public Set<String> allowedFields() {
+        return Collections.unmodifiableSet(INVITE_ALLOWED_FIELDS);
+      }
+    };
   }
 
   public static FieldSelector joinClassFieldSelector() {

@@ -31,7 +31,7 @@ public class AJClassMember extends Model {
   public static final String CLASS_MEMBER_STATUS_TYPE_JOINED = "joined";
 
   public static final String INVITE_STUDENT_QUERY =
-    "insert into class_member (class_id, user_id, class_member_status, creator_system) values (?, ?, ?, ?)";
+    "insert into class_member (class_id, user_id, class_member_status, creator_system) values (?::uuid, ?::uuid, ?::class_member_status_type, ?)";
 
   public static final String FETCH_FOR_USER_QUERY_FILTER = "class_id = ?::uuid and user_id = ?::uuid";
 

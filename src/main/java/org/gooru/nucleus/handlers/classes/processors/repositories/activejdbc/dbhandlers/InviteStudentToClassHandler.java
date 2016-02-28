@@ -1,16 +1,24 @@
 package org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.dbhandlers;
 
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import org.gooru.nucleus.handlers.classes.constants.MessageConstants;
 import org.gooru.nucleus.handlers.classes.processors.ProcessorContext;
+import org.gooru.nucleus.handlers.classes.processors.events.EventBuilderFactory;
+import org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.dbauth.AuthorizerBuilder;
+import org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.entities.AJClassMember;
 import org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.entities.AJEntityClass;
 import org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.validators.PayloadValidator;
 import org.gooru.nucleus.handlers.classes.processors.responses.ExecutionResult;
 import org.gooru.nucleus.handlers.classes.processors.responses.MessageResponse;
 import org.gooru.nucleus.handlers.classes.processors.responses.MessageResponseFactory;
+import org.javalite.activejdbc.Base;
+import org.javalite.activejdbc.DBException;
+import org.javalite.activejdbc.LazyList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.sql.PreparedStatement;
 import java.util.ResourceBundle;
 
 /**
@@ -58,17 +66,52 @@ class InviteStudentToClassHandler implements DBHandler {
 
   @Override
   public ExecutionResult<MessageResponse> validateRequest() {
-    return null;
+    LazyList<AJEntityClass> classes = AJEntityClass.where(AJEntityClass.FETCH_QUERY_FILTER, context.classId());
+    if (classes.isEmpty()) {
+      LOGGER.warn("Not able to find class '{}'", this.context.classId());
+      return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(RESOURCE_BUNDLE.getString("not.found")),
+        ExecutionResult.ExecutionStatus.FAILED);
+    }
+    AJEntityClass entityClass = classes.get(0);
+    // Class should be of current version and Class should not be archived
+    if (!entityClass.isCurrentVersion() || entityClass.isArchived()) {
+      LOGGER.warn("Class '{}' is either archived or not of current version", context.classId());
+      return new ExecutionResult<>(
+        MessageResponseFactory.createInvalidRequestResponse(RESOURCE_BUNDLE.getString("class.archived.or.incorrect.version")),
+        ExecutionResult.ExecutionStatus.FAILED);
+    }
+
+    return AuthorizerBuilder.buildInviteStudentToClassAuthorizer(this.context).authorize(entityClass);
   }
 
   @Override
   public ExecutionResult<MessageResponse> executeRequest() {
-    return null;
+    String creatorSystem = this.context.request().getString(AJClassMember.CREATOR_SYSTEM);
+    JsonArray invitees = this.context.request().getJsonArray(AJEntityClass.INVITEES);
+
+    return saveInvitations(creatorSystem, invitees);
   }
 
   @Override
   public boolean handlerReadOnly() {
     return false;
+  }
+
+  private ExecutionResult<MessageResponse> saveInvitations(String creatorSystem, JsonArray invitees) {
+    try {
+      PreparedStatement ps = Base.startBatch(AJClassMember.INVITE_STUDENT_QUERY);
+      for (Object invitee : invitees) {
+        Base.addBatch(ps, this.context.classId(), invitee.toString(), AJClassMember.CLASS_MEMBER_STATUS_TYPE_INVITED, creatorSystem);
+      }
+      Base.executeBatch(ps);
+      return new ExecutionResult<>(MessageResponseFactory.createNoContentResponse(RESOURCE_BUNDLE.getString("invited"),
+        EventBuilderFactory.getStudentInvitedEventBuilder(context.classId(), invitees)), ExecutionResult.ExecutionStatus.SUCCESSFUL);
+
+    } catch (DBException dbe) {
+      LOGGER.error("Error trying to save invitations", dbe);
+      return new ExecutionResult<>(MessageResponseFactory.createInternalErrorResponse(RESOURCE_BUNDLE.getString("error.from.store")),
+        ExecutionResult.ExecutionStatus.FAILED);
+    }
   }
 
   private static class DefaultPayloadValidator implements PayloadValidator {

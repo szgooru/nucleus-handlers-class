@@ -1,5 +1,6 @@
 package org.gooru.nucleus.handlers.classes.processors.events;
 
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 /**
@@ -20,6 +21,7 @@ public final class EventBuilderFactory {
   private static final String CLASS_ID = "id";
   private static final String STUDENT_ID = "studentId";
   private static final String COURSE_ID = "courseId";
+  private static final String INVITEES = "invitees";
 
   private EventBuilderFactory() {
     throw new AssertionError();
@@ -38,8 +40,9 @@ public final class EventBuilderFactory {
   }
 
   // TODO: Decide on how to pass on students' ID
-  public static EventBuilder getStudentInvitedEventBuilder(String classId) {
-    return () -> new JsonObject().put(EVENT_NAME, EVT_CLASS_STUDENT_INVITE).put(EVENT_BODY, new JsonObject().put(CLASS_ID, classId));
+  public static EventBuilder getStudentInvitedEventBuilder(String classId, JsonArray invitees) {
+    return () -> new JsonObject().put(EVENT_NAME, EVT_CLASS_STUDENT_INVITE)
+                                 .put(EVENT_BODY, new JsonObject().put(CLASS_ID, classId).put(INVITEES, invitees));
   }
 
   public static EventBuilder getStudentJoinedEventBuilder(String classId, String studentId) {
