@@ -54,8 +54,8 @@ class JoinClassByStudentHandler implements DBHandler {
         ExecutionResult.ExecutionStatus.FAILED);
     }
     // Our validators should certify this
-    JsonObject errors = new DefaultPayloadValidator()
-      .validatePayload(context.request(), AJEntityClass.joinClassFieldSelector(), AJEntityClass.getValidatorRegistry());
+    JsonObject errors =
+      new DefaultPayloadValidator().validatePayload(context.request(), AJEntityClass.joinClassFieldSelector(), AJEntityClass.getValidatorRegistry());
     if (errors != null && !errors.isEmpty()) {
       LOGGER.warn("Validation errors for request");
       return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(errors), ExecutionResult.ExecutionStatus.FAILED);
@@ -102,6 +102,9 @@ class JoinClassByStudentHandler implements DBHandler {
       this.membership.setRosterId(this.context.request().getString(AJClassMember.ROSTER_ID));
       this.membership.setCreatorSystem(this.context.request().getString(AJClassMember.CREATOR_SYSTEM));
       this.membership.setStatusJoined();
+      if (this.membership.hasErrors()) {
+        return membershipErrors();
+      }
     } else {
       // In case user is already invited we need to update the status
       if (AJClassMember.CLASS_MEMBER_STATUS_TYPE_INVITED.equalsIgnoreCase(this.membership.getString(AJClassMember.CLASS_MEMBER_STATUS))) {
@@ -117,15 +120,13 @@ class JoinClassByStudentHandler implements DBHandler {
     if (!result) {
       LOGGER.error("Class membership with id '{}' and user '{}' failed to save", this.classId, context.userId());
       if (this.membership.hasErrors()) {
-        Map<String, String> map = this.membership.errors();
-        JsonObject errors = new JsonObject();
-        map.forEach(errors::put);
-        return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(errors), ExecutionResult.ExecutionStatus.FAILED);
+        return membershipErrors();
       }
     }
     return new ExecutionResult<>(MessageResponseFactory.createNoContentResponse(RESOURCE_BUNDLE.getString("joined"),
       EventBuilderFactory.getStudentJoinedEventBuilder(this.classId, this.context.userId())), ExecutionResult.ExecutionStatus.SUCCESSFUL);
   }
+
 
   @Override
   public boolean handlerReadOnly() {
@@ -135,4 +136,10 @@ class JoinClassByStudentHandler implements DBHandler {
   private static class DefaultPayloadValidator implements PayloadValidator {
   }
 
+  private ExecutionResult<MessageResponse> membershipErrors() {
+    Map<String, String> map = this.membership.errors();
+    JsonObject errors = new JsonObject();
+    map.forEach(errors::put);
+    return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(errors), ExecutionResult.ExecutionStatus.FAILED);
+  }
 }
