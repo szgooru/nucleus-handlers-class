@@ -1,9 +1,15 @@
 package org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.dbhandlers;
 
+import io.vertx.core.json.JsonObject;
 import org.gooru.nucleus.handlers.classes.processors.ProcessorContext;
+import org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.dbauth.AuthorizerBuilder;
+import org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.entities.AJEntityClass;
+import org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.formatter.JsonFormatterBuilder;
 import org.gooru.nucleus.handlers.classes.processors.responses.ExecutionResult;
 import org.gooru.nucleus.handlers.classes.processors.responses.MessageResponse;
 import org.gooru.nucleus.handlers.classes.processors.responses.MessageResponseFactory;
+import org.javalite.activejdbc.DBException;
+import org.javalite.activejdbc.LazyList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,9 +29,9 @@ class FetchClassesForCourseHandler implements DBHandler {
 
   @Override
   public ExecutionResult<MessageResponse> checkSanity() {
-    if (context.classId() == null || context.classId().isEmpty()) {
-      LOGGER.warn("Missing class");
-      return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse(RESOURCE_BUNDLE.getString("missing.class.id")),
+    if (context.courseId() == null || context.courseId().isEmpty()) {
+      LOGGER.warn("Missing course");
+      return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse(RESOURCE_BUNDLE.getString("missing.course")),
         ExecutionResult.ExecutionStatus.FAILED);
     }
 
@@ -39,16 +45,25 @@ class FetchClassesForCourseHandler implements DBHandler {
 
   @Override
   public ExecutionResult<MessageResponse> validateRequest() {
-    return null;
+    return AuthorizerBuilder.buildFetchClassesForCourseAuthorizer(this.context).authorize(null);
   }
 
   @Override
   public ExecutionResult<MessageResponse> executeRequest() {
-    return null;
+    try {
+      LazyList<AJEntityClass> classes = AJEntityClass.where(AJEntityClass.FETCH_FOR_COURSE_QUERY_FILTER, context.courseId());
+      JsonObject response =
+        new JsonObject(JsonFormatterBuilder.buildSimpleJsonFormatter(false, AJEntityClass.FETCH_QUERY_FIELD_LIST).toJson(classes));
+      return new ExecutionResult<>(MessageResponseFactory.createOkayResponse(response), ExecutionResult.ExecutionStatus.SUCCESSFUL);
+    } catch (DBException e) {
+      LOGGER.error("Not able to fetch class from DB", e);
+      return new ExecutionResult<>(MessageResponseFactory.createInternalErrorResponse(RESOURCE_BUNDLE.getString("error.from.store")),
+        ExecutionResult.ExecutionStatus.FAILED);
+    }
   }
 
   @Override
   public boolean handlerReadOnly() {
-    return false;
+    return true;
   }
 }

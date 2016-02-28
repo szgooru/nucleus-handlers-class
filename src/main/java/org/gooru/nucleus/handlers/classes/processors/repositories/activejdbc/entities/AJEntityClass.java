@@ -48,6 +48,7 @@ public class AJEntityClass extends Model {
   public static final String CLASS_SHARING_TYPE_RESTRICTED = "restricted";
 
   public static final String FETCH_QUERY_FILTER = "id = ?::uuid and is_deleted = false";
+  public static final String FETCH_FOR_COURSE_QUERY_FILTER = "course_id = ?::uuid and is_deleted = false";
   public static final String FETCH_VIA_CODE_FILTER = "code = ? and is_deleted = false";
   public static final String COURSE_ASSOCIATION_FILTER = "id = ?::uuid and is_deleted = false and owner_id = ?::uuid";
   public static final String DELETE_QUERY =
