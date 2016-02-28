@@ -7,15 +7,15 @@ This project contains just one main verticle which is responsible for listening 
 
 DONE
 ----
-* Configured listener
-* Provided a initializer and finalizer mechanism for components to initialize and clean up themselves
-* Created a data source registry and register it as component for initialization and finalization
-* Provided Hikari connection pool from data source registry
-* Processor layer is created which is going to take over the message processing from main verticle once message is read
-* Logging and app configuration
-* DB layer and transaction infra
-* Validators, converters etc
-* Fetch class, Delete class, Associate course with class, update collaborator for class, create class, update class, join class by student, invite students to class handlers
+* Fetch class, 
+* Delete class, 
+* Associate course with class, 
+* Update collaborator for class, 
+* Create class, 
+* Update class, 
+* Join class by student, 
+* Invite students to class, 
+* Fetch classes for specified course 
 
 TODO
 ----
