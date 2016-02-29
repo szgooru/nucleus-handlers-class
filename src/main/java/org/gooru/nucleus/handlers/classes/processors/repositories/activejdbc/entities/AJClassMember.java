@@ -34,6 +34,7 @@ public class AJClassMember extends Model {
     "insert into class_member (class_id, user_id, class_member_status, creator_system) values (?::uuid, ?::uuid, ?::class_member_status_type, ?)";
 
   public static final String FETCH_FOR_USER_QUERY_FILTER = "class_id = ?::uuid and user_id = ?::uuid";
+  public static final String DELETE_MEMBERSHIP_FOR_CLASS_QUERY = "delete from class_member where class_id = ?::uuid";
 
   public void setClassId(String classId) {
     if (classId != null && !classId.isEmpty()) {
