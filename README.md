@@ -16,6 +16,7 @@ DONE
 * Join class by student, 
 * Invite students to class, 
 * Fetch classes for specified course 
+* Fetch classes for user
 
 TODO
 ----
