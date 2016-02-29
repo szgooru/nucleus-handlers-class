@@ -1,5 +1,6 @@
 package org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.dbhandlers;
 
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import org.gooru.nucleus.handlers.classes.constants.MessageConstants;
 import org.gooru.nucleus.handlers.classes.processors.ProcessorContext;
@@ -23,6 +24,7 @@ class FetchClassesForCourseHandler implements DBHandler {
   private static final Logger LOGGER = LoggerFactory.getLogger(FetchClassesForCourseHandler.class);
   private static final ResourceBundle RESOURCE_BUNDLE = ResourceBundle.getBundle("messages");
   private final ProcessorContext context;
+  private static final String RESPONSE_BUCKET_CLASSES = "classes";
 
   FetchClassesForCourseHandler(ProcessorContext context) {
     this.context = context;
@@ -53,9 +55,10 @@ class FetchClassesForCourseHandler implements DBHandler {
   public ExecutionResult<MessageResponse> executeRequest() {
     try {
       LazyList<AJEntityClass> classes = AJEntityClass.where(AJEntityClass.FETCH_FOR_COURSE_QUERY_FILTER, context.courseId());
-      JsonObject response =
-        new JsonObject(JsonFormatterBuilder.buildSimpleJsonFormatter(false, AJEntityClass.FETCH_QUERY_FIELD_LIST).toJson(classes));
-      return new ExecutionResult<>(MessageResponseFactory.createOkayResponse(response), ExecutionResult.ExecutionStatus.SUCCESSFUL);
+      JsonArray classesList =
+        new JsonArray(JsonFormatterBuilder.buildSimpleJsonFormatter(false, AJEntityClass.FETCH_QUERY_FIELD_LIST).toJson(classes));
+      return new ExecutionResult<>(MessageResponseFactory.createOkayResponse(new JsonObject().put(RESPONSE_BUCKET_CLASSES, classesList)),
+        ExecutionResult.ExecutionStatus.SUCCESSFUL);
     } catch (DBException e) {
       LOGGER.error("Not able to fetch class from DB", e);
       return new ExecutionResult<>(MessageResponseFactory.createInternalErrorResponse(RESOURCE_BUNDLE.getString("error.from.store")),
