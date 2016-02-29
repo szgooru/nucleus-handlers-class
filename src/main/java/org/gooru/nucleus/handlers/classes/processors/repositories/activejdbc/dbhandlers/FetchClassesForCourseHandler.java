@@ -1,6 +1,7 @@
 package org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.dbhandlers;
 
 import io.vertx.core.json.JsonObject;
+import org.gooru.nucleus.handlers.classes.constants.MessageConstants;
 import org.gooru.nucleus.handlers.classes.processors.ProcessorContext;
 import org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.dbauth.AuthorizerBuilder;
 import org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.entities.AJEntityClass;
@@ -35,7 +36,7 @@ class FetchClassesForCourseHandler implements DBHandler {
         ExecutionResult.ExecutionStatus.FAILED);
     }
 
-    if (context.userId() == null || context.userId().isEmpty()) {
+    if (context.userId() == null || context.userId().isEmpty() || MessageConstants.MSG_USER_ANONYMOUS.equalsIgnoreCase(context.userId())) {
       LOGGER.warn("Invalid user");
       return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(RESOURCE_BUNDLE.getString("not.allowed")),
         ExecutionResult.ExecutionStatus.FAILED);
