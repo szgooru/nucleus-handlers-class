@@ -96,7 +96,7 @@ class MessageProcessor implements Processor {
 
   private MessageResponse listClassesForCourse() {
     ProcessorContext context = createContextWithCourse();
-    if (!validateContextWithCourse(context)) {
+    if (!validateContextOnlyCourse(context)) {
       return MessageResponseFactory.createInvalidRequestResponse(RESOURCE_BUNDLE.getString("invalid.class.or.course"));
     }
     return RepoBuilder.buildClassRepo(context).fetchClassesForCourse();
@@ -104,9 +104,6 @@ class MessageProcessor implements Processor {
 
   private MessageResponse listClassesForUser() {
     ProcessorContext context = createContext();
-    if (!validateContext(context)) {
-      return MessageResponseFactory.createInvalidRequestResponse(RESOURCE_BUNDLE.getString("invalid.class"));
-    }
     return RepoBuilder.buildClassRepo(context).fetchClassesForUser();
   }
 
@@ -188,12 +185,15 @@ class MessageProcessor implements Processor {
 
 
   private boolean validateContextWithCourse(ProcessorContext context) {
+    return validateContextOnlyCourse(context) && validateContext(context);
+  }
+
+  private boolean validateContextOnlyCourse(ProcessorContext context) {
     if (!validateId(context.courseId())) {
       LOGGER.error("Invalid request, course id not available/incorrect format. Aborting");
       return false;
     }
-    return validateContext(context);
-
+    return true;
   }
 
   private boolean validateContext(ProcessorContext context) {
