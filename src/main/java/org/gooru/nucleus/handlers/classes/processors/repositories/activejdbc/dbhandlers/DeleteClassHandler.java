@@ -95,8 +95,7 @@ class DeleteClassHandler implements DBHandler {
         ExecutionResult.ExecutionStatus.SUCCESSFUL);
     } catch (DBException dbe) {
       LOGGER.warn("Unable to delete membership details for class '{}' delete request", context.classId(), dbe);
-      return new ExecutionResult<>(
-        MessageResponseFactory.createInternalErrorResponse(RESOURCE_BUNDLE.getString("membership.delete.failure")),
+      return new ExecutionResult<>(MessageResponseFactory.createInternalErrorResponse(RESOURCE_BUNDLE.getString("membership.delete.failure")),
         ExecutionResult.ExecutionStatus.FAILED);
     }
   }
