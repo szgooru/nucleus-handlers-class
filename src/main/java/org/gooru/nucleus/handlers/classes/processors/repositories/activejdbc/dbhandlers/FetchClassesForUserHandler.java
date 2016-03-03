@@ -4,6 +4,7 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import org.gooru.nucleus.handlers.classes.constants.MessageConstants;
 import org.gooru.nucleus.handlers.classes.processors.ProcessorContext;
+import org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.dbauth.AuthorizerBuilder;
 import org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.entities.AJClassMember;
 import org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.entities.AJEntityClass;
 import org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.formatter.JsonFormatterBuilder;
@@ -51,7 +52,7 @@ class FetchClassesForUserHandler implements DBHandler {
   @Override
   public ExecutionResult<MessageResponse> validateRequest() {
     // Nothing to validate
-    return new ExecutionResult<>(null, ExecutionResult.ExecutionStatus.CONTINUE_PROCESSING);
+    return AuthorizerBuilder.buildFetchClassesForUserAuthorizer(context).authorize(null);
   }
 
   @Override

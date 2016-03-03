@@ -2,6 +2,7 @@ package org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.db
 
 import io.vertx.core.json.JsonObject;
 import org.gooru.nucleus.handlers.classes.processors.ProcessorContext;
+import org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.dbauth.AuthorizerBuilder;
 import org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.entities.AJEntityClass;
 import org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.formatter.JsonFormatterBuilder;
 import org.gooru.nucleus.handlers.classes.processors.responses.ExecutionResult;
@@ -53,7 +54,7 @@ class FetchClassHandler implements DBHandler {
           ExecutionResult.ExecutionStatus.FAILED);
       }
       this.entityClass = classes.get(0);
-      return new ExecutionResult<>(null, ExecutionResult.ExecutionStatus.CONTINUE_PROCESSING);
+      return AuthorizerBuilder.buildFetchClassAuthorizer(context).authorize(this.entityClass);
     } catch (DBException e) {
       LOGGER.error("Not able to fetch class from DB", e);
       return new ExecutionResult<>(MessageResponseFactory.createInternalErrorResponse(RESOURCE_BUNDLE.getString("error.from.store")),
