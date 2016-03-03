@@ -19,6 +19,7 @@ package org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.db
  * @link FetchClassHandler
  * Anyone can fetch class details including anonymous
  * @link FetchClassMembersHandler
+ * Can be done by user if he is either owner/creator of class, collaborator of the class or a student of class
  * @link InviteStudentToClassHandler
  * Owner or collaborator of class can do this operation
  * @link JoinClassByStudentHandler
