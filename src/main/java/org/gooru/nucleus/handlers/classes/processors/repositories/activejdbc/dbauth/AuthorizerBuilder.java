@@ -38,8 +38,9 @@ public final class AuthorizerBuilder {
   }
 
   public static Authorizer<AJEntityClass> buildFetchClassMembersAuthorizer(ProcessorContext context) {
-    // As long as session token is valid and user is not anonymous, which is the case as we are, we should be fine
-    return model -> new ExecutionResult<>(null, ExecutionResult.ExecutionStatus.CONTINUE_PROCESSING);
+    // User should be a member (which is either teacher or collaborator or student of that class. The student may have
+    // just been invited or (s)he may have joined, we don't care as long as (s)he is there
+    return new ClassMemberAuthorizer(context);
   }
 
   public static Authorizer<AJEntityClass> buildInviteStudentToClassAuthorizer(ProcessorContext context) {

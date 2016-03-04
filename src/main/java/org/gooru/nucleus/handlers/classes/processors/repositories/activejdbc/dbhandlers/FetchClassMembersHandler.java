@@ -1,12 +1,25 @@
 package org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.dbhandlers;
 
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
+import org.gooru.nucleus.handlers.classes.constants.MessageConstants;
 import org.gooru.nucleus.handlers.classes.processors.ProcessorContext;
+import org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.Utils;
+import org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.dbauth.AuthorizerBuilder;
+import org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.entities.AJClassMember;
+import org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.entities.AJEntityClass;
+import org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.entities.AJUserDemographic;
+import org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.formatter.JsonFormatterBuilder;
 import org.gooru.nucleus.handlers.classes.processors.responses.ExecutionResult;
 import org.gooru.nucleus.handlers.classes.processors.responses.MessageResponse;
 import org.gooru.nucleus.handlers.classes.processors.responses.MessageResponseFactory;
+import org.javalite.activejdbc.DBException;
+import org.javalite.activejdbc.LazyList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.ResourceBundle;
 
 /**
@@ -16,6 +29,12 @@ class FetchClassMembersHandler implements DBHandler {
   private static final Logger LOGGER = LoggerFactory.getLogger(FetchClassMembersHandler.class);
   private static final ResourceBundle RESOURCE_BUNDLE = ResourceBundle.getBundle("messages");
   private final ProcessorContext context;
+  private AJEntityClass entityClass;
+  private static final String RESPONSE_BUCKET_OWNER = "owner";
+  private static final String RESPONSE_BUCKET_COLLABORATOR = "collaborator";
+  private static final String RESPONSE_BUCKET_MEMBER = "member";
+  private static final String RESPONSE_BUCKET_MEMBER_DETAILS = "details";
+
 
   public FetchClassMembersHandler(ProcessorContext context) {
     this.context = context;
@@ -29,7 +48,7 @@ class FetchClassMembersHandler implements DBHandler {
         ExecutionResult.ExecutionStatus.FAILED);
     }
 
-    if (context.userId() == null || context.userId().isEmpty()) {
+    if (context.userId() == null || context.userId().isEmpty() || MessageConstants.MSG_USER_ANONYMOUS.equalsIgnoreCase(context.userId())) {
       LOGGER.warn("Invalid user");
       return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(RESOURCE_BUNDLE.getString("not.allowed")),
         ExecutionResult.ExecutionStatus.FAILED);
@@ -39,16 +58,84 @@ class FetchClassMembersHandler implements DBHandler {
 
   @Override
   public ExecutionResult<MessageResponse> validateRequest() {
-    return null;
+    try {
+      LazyList<AJEntityClass> classes = AJEntityClass.where(AJEntityClass.FETCH_QUERY_FILTER, context.classId());
+      if (classes.isEmpty()) {
+        LOGGER.warn("Not able to find class '{}'", this.context.classId());
+        return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(RESOURCE_BUNDLE.getString("not.found")),
+          ExecutionResult.ExecutionStatus.FAILED);
+      }
+      this.entityClass = classes.get(0);
+      return AuthorizerBuilder.buildFetchClassMembersAuthorizer(context).authorize(this.entityClass);
+    } catch (DBException e) {
+      LOGGER.error("Not able to fetch class from DB", e);
+      return new ExecutionResult<>(MessageResponseFactory.createInternalErrorResponse(RESOURCE_BUNDLE.getString("error.from.store")),
+        ExecutionResult.ExecutionStatus.FAILED);
+    }
   }
 
   @Override
   public ExecutionResult<MessageResponse> executeRequest() {
-    return null;
+
+    JsonObject result = new JsonObject();
+    List<String> memberIdList = new ArrayList<>();
+
+    // Fetch all the class members
+    LazyList<AJClassMember> members = AJClassMember.where(AJClassMember.FETCH_ALL_QUERY_FILTER, this.context.classId());
+    populateOwnerInfo(memberIdList, result);
+    populateCollaboratorsInfo(memberIdList, result);
+    populateMembersInfo(result, memberIdList, members);
+    populateDemographics(memberIdList, result);
+
+    return new ExecutionResult<>(MessageResponseFactory.createOkayResponse(result), ExecutionResult.ExecutionStatus.SUCCESSFUL);
+  }
+
+  private void populateDemographics(List<String> memberIdList, JsonObject result) {
+    // Now resolve the demographic of members
+    LazyList<AJUserDemographic> demographics =
+      AJUserDemographic.findBySQL(AJUserDemographic.GET_SUMMARY_QUERY, Utils.convertListToPostgresArrayStringRepresentation(memberIdList));
+    // update that in the response
+    JsonArray userDemographics =
+      new JsonArray(JsonFormatterBuilder.buildSimpleJsonFormatter(false, AJUserDemographic.GET_SUMMARY_QUERY_FIELD_LIST).toJson(demographics));
+    result.put(RESPONSE_BUCKET_MEMBER_DETAILS, userDemographics);
+  }
+
+  private void populateMembersInfo(JsonObject result, List<String> memberIdList, LazyList<AJClassMember> members) {
+    // Update the IDs for members
+    if (!members.isEmpty()) {
+      JsonArray membersArray = new JsonArray();
+      members.forEach(ajClassMember -> {
+        final String ajClassMemberString = ajClassMember.getString(AJClassMember.USER_ID);
+        memberIdList.add(ajClassMemberString);
+        membersArray.add(ajClassMemberString);
+      });
+      result.put(RESPONSE_BUCKET_MEMBER, membersArray);
+    } else {
+      result.put(RESPONSE_BUCKET_MEMBER, new JsonArray());
+    }
+  }
+
+  private void populateCollaboratorsInfo(List<String> memberIdList, JsonObject result) {
+    // Update the IDs for collaborator
+    String collaboratorString = this.entityClass.getString(AJEntityClass.COLLABORATOR);
+    if (collaboratorString != null && !collaboratorString.isEmpty()) {
+      JsonArray collaborators = new JsonArray(collaboratorString);
+      result.put(RESPONSE_BUCKET_COLLABORATOR, collaborators);
+      collaborators.forEach(o -> memberIdList.add(o.toString()));
+    } else {
+      result.put(RESPONSE_BUCKET_COLLABORATOR, new JsonArray());
+    }
+  }
+
+  private void populateOwnerInfo(List<String> memberIdList, JsonObject result) {
+    // Update IDs for owner
+    final String owner = this.entityClass.getString(AJEntityClass.CREATOR_ID).toString();
+    result.put(RESPONSE_BUCKET_OWNER, new JsonArray().add(owner));
+    memberIdList.add(owner);
   }
 
   @Override
   public boolean handlerReadOnly() {
-    return false;
+    return true;
   }
 }

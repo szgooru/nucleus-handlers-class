@@ -4,6 +4,7 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import org.gooru.nucleus.handlers.classes.constants.MessageConstants;
 import org.gooru.nucleus.handlers.classes.processors.ProcessorContext;
+import org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.Utils;
 import org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.dbauth.AuthorizerBuilder;
 import org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.entities.AJClassMember;
 import org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.entities.AJEntityClass;
@@ -17,7 +18,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.ResourceBundle;
 
@@ -131,7 +131,8 @@ class FetchClassesForUserHandler implements DBHandler {
     for (String classId : classIdList) {
       builder.append('"').append(classId).append('"');
     }
-    LazyList<AJEntityClass> classes = AJEntityClass.where(AJEntityClass.FETCH_MULTIPLE_QUERY_FILTER, listToPostgresArrayString(classIdList));
+    LazyList<AJEntityClass> classes =
+      AJEntityClass.where(AJEntityClass.FETCH_MULTIPLE_QUERY_FILTER, Utils.convertListToPostgresArrayStringRepresentation(classIdList));
     JsonArray classDetails =
       new JsonArray(JsonFormatterBuilder.buildSimpleJsonFormatter(false, AJEntityClass.FETCH_QUERY_FIELD_LIST).toJson(classes));
     result.put(RESPONSE_BUCKET_CLASSES, classDetails);
@@ -139,23 +140,5 @@ class FetchClassesForUserHandler implements DBHandler {
 
   }
 
-  private String listToPostgresArrayString(List<String> input) {
-    int approxSize = ((input.size() + 1) * 36); // Length of UUID is around 36 chars
-    Iterator<String> it = input.iterator();
-    if (!it.hasNext()) {
-      return "{}";
-    }
 
-    StringBuilder sb = new StringBuilder(approxSize);
-    sb.append('{');
-    for (; ; ) {
-      String s = it.next();
-      sb.append('"').append(s).append('"');
-      if (!it.hasNext()) {
-        return sb.append('}').toString();
-      }
-      sb.append(',');
-    }
-
-  }
 }
