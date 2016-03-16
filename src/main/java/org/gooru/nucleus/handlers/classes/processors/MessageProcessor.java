@@ -109,7 +109,7 @@ class MessageProcessor implements Processor {
 
   private MessageResponse joinClassByStudent() {
     ProcessorContext context = createContext();
-    if (!validateContext(context)) {
+    if (!validateContextForCode(context)) {
       return MessageResponseFactory.createInvalidRequestResponse(RESOURCE_BUNDLE.getString("invalid.class"));
     }
     return RepoBuilder.buildClassRepo(context).joinClassByStudent();
@@ -183,6 +183,14 @@ class MessageProcessor implements Processor {
 
   }
 
+
+  private boolean validateContextForCode(ProcessorContext context) {
+    if (context.classCode() == null || context.classCode().isEmpty()) {
+      LOGGER.error("Invalid request, class code is invalid");
+      return false;
+    }
+    return true;
+  }
 
   private boolean validateContextWithCourse(ProcessorContext context) {
     return validateContextOnlyCourse(context) && validateContext(context);
