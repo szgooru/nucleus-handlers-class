@@ -14,7 +14,7 @@ import java.util.ResourceBundle;
  * Created by ashish on 27/2/16.
  */
 @Table("class_member")
-@CompositePK({ "class_id", "user_id"})
+@CompositePK({ "class_id", "email"})
 public class AJClassMember extends Model {
 
   private static final ResourceBundle RESOURCE_BUNDLE = ResourceBundle.getBundle("messages");
@@ -33,7 +33,7 @@ public class AJClassMember extends Model {
   public static final String CLASS_MEMBER_STATUS_TYPE_JOINED = "joined";
 
   public static final String INVITE_STUDENT_QUERY =
-    "insert into class_member (class_id, user_id, class_member_status, creator_system) values (?::uuid, ?::uuid, ?::class_member_status_type, ?)";
+    "insert into class_member (class_id, email, class_member_status, creator_system) values (?::uuid, ?, ?::class_member_status_type, ?)";
 
   public static final String FETCH_FOR_USER_QUERY_FILTER = "class_id = ?::uuid and user_id = ?::uuid";
   public static final String FETCH_ALL_QUERY_FILTER = "class_id = ?::uuid";
