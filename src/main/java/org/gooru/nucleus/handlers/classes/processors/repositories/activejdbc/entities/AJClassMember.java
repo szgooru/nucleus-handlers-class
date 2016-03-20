@@ -22,6 +22,7 @@ public class AJClassMember extends Model {
 
   public static final String CLASS_ID = "class_id";
   public static final String USER_ID = "user_id";
+  public static final String EMAIL = "email";
   public static final String CREATOR_ID = "creator_id";
   public static final String CREATED_AT = "created_at";
   public static final String UPDATED_AT = "updated_at";

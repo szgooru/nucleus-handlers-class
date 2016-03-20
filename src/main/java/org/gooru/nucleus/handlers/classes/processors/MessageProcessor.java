@@ -112,6 +112,9 @@ class MessageProcessor implements Processor {
     if (!validateContextForCode(context)) {
       return MessageResponseFactory.createInvalidRequestResponse(RESOURCE_BUNDLE.getString("invalid.class"));
     }
+    if (!validatePrefsForEmail(context)) {
+      return MessageResponseFactory.createForbiddenResponse(RESOURCE_BUNDLE.getString("email.not.available"));
+    }
     return RepoBuilder.buildClassRepo(context).joinClassByStudent();
   }
 
@@ -187,6 +190,15 @@ class MessageProcessor implements Processor {
   private boolean validateContextForCode(ProcessorContext context) {
     if (context.classCode() == null || context.classCode().isEmpty()) {
       LOGGER.error("Invalid request, class code is invalid");
+      return false;
+    }
+    return true;
+  }
+
+  private boolean validatePrefsForEmail(ProcessorContext context) {
+    String email = context.prefs().getString(MessageConstants.EMAIL);
+    if (email == null || email.isEmpty() || !email.contains("@")) {
+      LOGGER.error("Incorrect authroization, email not available");
       return false;
     }
     return true;

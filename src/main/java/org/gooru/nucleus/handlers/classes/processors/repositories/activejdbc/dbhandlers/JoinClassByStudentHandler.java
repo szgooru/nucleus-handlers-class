@@ -28,6 +28,7 @@ class JoinClassByStudentHandler implements DBHandler {
   private AJEntityClass entityClass;
   private String classId;
   private AJClassMember membership;
+  private String email;
 
   JoinClassByStudentHandler(ProcessorContext context) {
     this.context = context;
@@ -35,7 +36,7 @@ class JoinClassByStudentHandler implements DBHandler {
 
   @Override
   public ExecutionResult<MessageResponse> checkSanity() {
-    // There should be a class id present
+    // There should be a class code present
     if (context.classCode() == null || context.classCode().isEmpty()) {
       LOGGER.warn("Missing class code");
       return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse(RESOURCE_BUNDLE.getString("missing.class.code")),
@@ -45,6 +46,12 @@ class JoinClassByStudentHandler implements DBHandler {
     if (context.userId() == null || context.userId().isEmpty() || context.userId().equalsIgnoreCase(MessageConstants.MSG_USER_ANONYMOUS)) {
       LOGGER.warn("Anonymous user attempting to join class");
       return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(RESOURCE_BUNDLE.getString("not.allowed")),
+        ExecutionResult.ExecutionStatus.FAILED);
+    }
+    this.email = context.prefs().getString(MessageConstants.EMAIL);
+    if (email == null || email.isEmpty() || !email.contains("@")) {
+      LOGGER.error("Incorrect authroization, email not available");
+      return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(RESOURCE_BUNDLE.getString("email.not.available")),
         ExecutionResult.ExecutionStatus.FAILED);
     }
     // Payload should not be null
@@ -81,7 +88,7 @@ class JoinClassByStudentHandler implements DBHandler {
         ExecutionResult.ExecutionStatus.FAILED);
     }
     // Now get the membership record for that user
-    LazyList<AJClassMember> members = AJClassMember.where(AJClassMember.FETCH_FOR_USER_QUERY_FILTER, this.classId, this.context.userId());
+    LazyList<AJClassMember> members = AJClassMember.where(AJClassMember.FETCH_FOR_USER_QUERY_FILTER, this.classId, this.email);
     if (!members.isEmpty()) {
       this.membership = members.get(0);
     } else {
@@ -98,6 +105,7 @@ class JoinClassByStudentHandler implements DBHandler {
       // Make an entry into the members tables in case of open class
       this.membership = new AJClassMember();
       this.membership.setClassId(this.classId);
+      this.membership.setString(AJClassMember.EMAIL, this.email);
       this.membership.setUserId(this.context.userId());
       this.membership.setRosterId(this.context.request().getString(AJClassMember.ROSTER_ID));
       this.membership.setCreatorSystem(this.context.request().getString(AJClassMember.CREATOR_SYSTEM));
