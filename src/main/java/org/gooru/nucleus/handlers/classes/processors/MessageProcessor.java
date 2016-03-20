@@ -11,7 +11,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ResourceBundle;
-import java.util.UUID;
 
 class MessageProcessor implements Processor {
 
@@ -88,7 +87,7 @@ class MessageProcessor implements Processor {
 
   private MessageResponse listClassMembers() {
     ProcessorContext context = createContext();
-    if (!validateContext(context)) {
+    if (!ProcessorContextHelper.validateContext(context)) {
       return MessageResponseFactory.createInvalidRequestResponse(RESOURCE_BUNDLE.getString("invalid.class"));
     }
     return RepoBuilder.buildClassRepo(context).fetchClassMembers();
@@ -96,7 +95,7 @@ class MessageProcessor implements Processor {
 
   private MessageResponse listClassesForCourse() {
     ProcessorContext context = createContextWithCourse();
-    if (!validateContextOnlyCourse(context)) {
+    if (!ProcessorContextHelper.validateContextOnlyCourse(context)) {
       return MessageResponseFactory.createInvalidRequestResponse(RESOURCE_BUNDLE.getString("invalid.class.or.course"));
     }
     return RepoBuilder.buildClassRepo(context).fetchClassesForCourse();
@@ -109,10 +108,10 @@ class MessageProcessor implements Processor {
 
   private MessageResponse joinClassByStudent() {
     ProcessorContext context = createContext();
-    if (!validateContextForCode(context)) {
+    if (!ProcessorContextHelper.validateContextForCode(context)) {
       return MessageResponseFactory.createInvalidRequestResponse(RESOURCE_BUNDLE.getString("invalid.class"));
     }
-    if (!validatePrefsForEmail(context)) {
+    if (!ProcessorContextHelper.validatePrefsForEmail(context)) {
       return MessageResponseFactory.createForbiddenResponse(RESOURCE_BUNDLE.getString("email.not.available"));
     }
     return RepoBuilder.buildClassRepo(context).joinClassByStudent();
@@ -120,7 +119,7 @@ class MessageProcessor implements Processor {
 
   private MessageResponse inviteStudentToClass() {
     ProcessorContext context = createContext();
-    if (!validateContext(context)) {
+    if (!ProcessorContextHelper.validateContext(context)) {
       return MessageResponseFactory.createInvalidRequestResponse(RESOURCE_BUNDLE.getString("invalid.class"));
     }
     return RepoBuilder.buildClassRepo(context).inviteStudentToClass();
@@ -128,7 +127,7 @@ class MessageProcessor implements Processor {
 
   private MessageResponse deleteClass() {
     ProcessorContext context = createContext();
-    if (!validateContext(context)) {
+    if (!ProcessorContextHelper.validateContext(context)) {
       return MessageResponseFactory.createInvalidRequestResponse(RESOURCE_BUNDLE.getString("invalid.class"));
     }
     return RepoBuilder.buildClassRepo(context).deleteClass();
@@ -136,7 +135,7 @@ class MessageProcessor implements Processor {
 
   private MessageResponse associateCourseWithClass() {
     ProcessorContext context = createContextWithCourse();
-    if (!validateContextWithCourse(context)) {
+    if (!ProcessorContextHelper.validateContextWithCourse(context)) {
       return MessageResponseFactory.createInvalidRequestResponse(RESOURCE_BUNDLE.getString("invalid.class.or.course"));
     }
     return RepoBuilder.buildClassRepo(context).associateCourseWithClass();
@@ -144,7 +143,7 @@ class MessageProcessor implements Processor {
 
   private MessageResponse updateCollaboratorForClass() {
     ProcessorContext context = createContext();
-    if (!validateContext(context)) {
+    if (!ProcessorContextHelper.validateContext(context)) {
       return MessageResponseFactory.createInvalidRequestResponse(RESOURCE_BUNDLE.getString("invalid.class"));
     }
     return RepoBuilder.buildClassRepo(context).updateCollaboratorForClass();
@@ -152,7 +151,7 @@ class MessageProcessor implements Processor {
 
   private MessageResponse processClassUpdate() {
     ProcessorContext context = createContext();
-    if (!validateContext(context)) {
+    if (!ProcessorContextHelper.validateContext(context)) {
       return MessageResponseFactory.createInvalidRequestResponse(RESOURCE_BUNDLE.getString("invalid.class"));
     }
     return RepoBuilder.buildClassRepo(context).updateClass();
@@ -160,7 +159,7 @@ class MessageProcessor implements Processor {
 
   private MessageResponse processClassGet() {
     ProcessorContext context = createContext();
-    if (!validateContext(context)) {
+    if (!ProcessorContextHelper.validateContext(context)) {
       return MessageResponseFactory.createInvalidRequestResponse(RESOURCE_BUNDLE.getString("invalid.class"));
     }
     return RepoBuilder.buildClassRepo(context).fetchClass();
@@ -187,43 +186,6 @@ class MessageProcessor implements Processor {
   }
 
 
-  private boolean validateContextForCode(ProcessorContext context) {
-    if (context.classCode() == null || context.classCode().isEmpty()) {
-      LOGGER.error("Invalid request, class code is invalid");
-      return false;
-    }
-    return true;
-  }
-
-  private boolean validatePrefsForEmail(ProcessorContext context) {
-    String email = context.prefs().getString(MessageConstants.EMAIL);
-    if (email == null || email.isEmpty() || !email.contains("@")) {
-      LOGGER.error("Incorrect authroization, email not available");
-      return false;
-    }
-    return true;
-  }
-
-  private boolean validateContextWithCourse(ProcessorContext context) {
-    return validateContextOnlyCourse(context) && validateContext(context);
-  }
-
-  private boolean validateContextOnlyCourse(ProcessorContext context) {
-    if (!validateId(context.courseId())) {
-      LOGGER.error("Invalid request, course id not available/incorrect format. Aborting");
-      return false;
-    }
-    return true;
-  }
-
-  private boolean validateContext(ProcessorContext context) {
-    if (!validateId(context.classId())) {
-      LOGGER.error("Invalid request, class id not available/incorrect format. Aborting");
-      return false;
-    }
-    return true;
-  }
-
   private ExecutionResult<MessageResponse> validateAndInitialize() {
     if (message == null || !(message.body() instanceof JsonObject)) {
       LOGGER.error("Invalid message received, either null or body of message is not JsonObject ");
@@ -232,7 +194,7 @@ class MessageProcessor implements Processor {
     }
 
     userId = ((JsonObject) message.body()).getString(MessageConstants.MSG_USER_ID);
-    if (!validateUser(userId)) {
+    if (!ProcessorContextHelper.validateUser(userId)) {
       LOGGER.error("Invalid user id passed. Not authorized.");
       return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(RESOURCE_BUNDLE.getString("invalid.user")),
         ExecutionResult.ExecutionStatus.FAILED);
@@ -256,22 +218,5 @@ class MessageProcessor implements Processor {
     return new ExecutionResult<>(null, ExecutionResult.ExecutionStatus.CONTINUE_PROCESSING);
   }
 
-  private boolean validateUser(String userId) {
-    return !(userId == null || userId.isEmpty()) && (userId.equalsIgnoreCase(MessageConstants.MSG_USER_ANONYMOUS) || validateUuid(userId));
-  }
 
-  private boolean validateId(String id) {
-    return !(id == null || id.isEmpty()) && validateUuid(id);
-  }
-
-  private boolean validateUuid(String uuidString) {
-    try {
-      UUID uuid = UUID.fromString(uuidString);
-      return true;
-    } catch (IllegalArgumentException e) {
-      return false;
-    } catch (Exception e) {
-      return false;
-    }
-  }
 }
