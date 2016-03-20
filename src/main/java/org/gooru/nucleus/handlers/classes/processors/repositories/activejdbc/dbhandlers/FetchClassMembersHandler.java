@@ -33,6 +33,7 @@ class FetchClassMembersHandler implements DBHandler {
   private static final String RESPONSE_BUCKET_OWNER = "owner";
   private static final String RESPONSE_BUCKET_COLLABORATOR = "collaborator";
   private static final String RESPONSE_BUCKET_MEMBER = "member";
+  private static final String RESPONSE_BUCKET_INVITEES = "invitees";
   private static final String RESPONSE_BUCKET_MEMBER_DETAILS = "details";
 
 
@@ -104,14 +105,24 @@ class FetchClassMembersHandler implements DBHandler {
     // Update the IDs for members
     if (!members.isEmpty()) {
       JsonArray membersArray = new JsonArray();
+      JsonArray invitedArrays = new JsonArray();
       members.forEach(ajClassMember -> {
-        final String ajClassMemberString = ajClassMember.getString(AJClassMember.USER_ID);
-        memberIdList.add(ajClassMemberString);
-        membersArray.add(ajClassMemberString);
+        final String ajClassMemberIdString = ajClassMember.getString(AJClassMember.USER_ID);
+        if (ajClassMemberIdString != null && !ajClassMemberIdString.isEmpty()) {
+          memberIdList.add(ajClassMemberIdString);
+          membersArray.add(ajClassMemberIdString);
+        } else {
+          final String ajClassMemberEmailString = ajClassMember.getString(AJClassMember.EMAIL);
+          if (ajClassMemberEmailString != null && !ajClassMemberEmailString.isEmpty()) {
+            invitedArrays.add(ajClassMemberEmailString);
+          }
+        }
       });
       result.put(RESPONSE_BUCKET_MEMBER, membersArray);
+      result.put(RESPONSE_BUCKET_INVITEES, invitedArrays);
     } else {
       result.put(RESPONSE_BUCKET_MEMBER, new JsonArray());
+      result.put(RESPONSE_BUCKET_INVITEES, new JsonArray());
     }
   }
 
@@ -129,7 +140,7 @@ class FetchClassMembersHandler implements DBHandler {
 
   private void populateOwnerInfo(List<String> memberIdList, JsonObject result) {
     // Update IDs for owner
-    final String owner = this.entityClass.getString(AJEntityClass.CREATOR_ID).toString();
+    final String owner = this.entityClass.getString(AJEntityClass.CREATOR_ID);
     result.put(RESPONSE_BUCKET_OWNER, new JsonArray().add(owner));
     memberIdList.add(owner);
   }
