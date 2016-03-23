@@ -62,7 +62,7 @@ public class AJEntityClass extends Model {
     new HashSet<>(Arrays.asList(TITLE, DESCRIPTION, GREETING, GRADE, CLASS_SHARING, COVER_IMAGE, MIN_SCORE, END_DATE, COLLABORATOR));
   public static final Set<String> CREATABLE_FIELDS = new HashSet<>(
     Arrays.asList(TITLE, DESCRIPTION, GREETING, GRADE, CLASS_SHARING, COVER_IMAGE, MIN_SCORE, END_DATE, COLLABORATOR, CREATOR_SYSTEM, ROSTER_ID));
-  public static final Set<String> MANDATORY_FIELDS = new HashSet<>(Arrays.asList(TITLE, CLASS_SHARING, MIN_SCORE));
+  public static final Set<String> MANDATORY_FIELDS = new HashSet<>(Arrays.asList(TITLE, CLASS_SHARING));
   public static final Set<String> FORBIDDEN_FIELDS =
     new HashSet<>(Arrays.asList(ID, CREATED_AT, UPDATED_AT, CREATOR_ID, MODIFIER_ID, IS_DELETED, GOORU_VERSION, IS_ARCHIVED));
   public static final Set<String> COLLABORATOR_FIELDS = new HashSet<>(Arrays.asList(COLLABORATOR));
