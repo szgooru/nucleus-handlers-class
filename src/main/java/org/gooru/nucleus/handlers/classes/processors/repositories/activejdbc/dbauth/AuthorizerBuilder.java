@@ -64,4 +64,8 @@ public final class AuthorizerBuilder {
     // As long as session token is valid and user is not anonymous, which is the case as we are, we should be fine
     return model -> new ExecutionResult<>(null, ExecutionResult.ExecutionStatus.CONTINUE_PROCESSING);
   }
+
+  public static Authorizer<AJEntityClass> buildContentVisibilityAuthorizer(ProcessorContext context) {
+    return new ClassOwnerOrCollaboratorAuthorizer(context);
+  }
 }

@@ -32,6 +32,7 @@ public final class MessageConstants {
   public static final String MSG_OP_CLASS_JOIN = "class.join";
   public static final String MSG_OP_CLASS_INVITE = "class.invite.user";
   public static final String MSG_OP_CLASS_COURSE_ASSOCIATION = "class.course.association";
+  public static final String MSG_OP_CLASS_SET_CONTENT_VISIBILITY = "class.content.visibility.set";
 
 
   // Containers for different responses

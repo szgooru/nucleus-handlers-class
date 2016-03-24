@@ -1,5 +1,6 @@
 package org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.entities;
 
+import io.vertx.core.json.JsonObject;
 import org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.converters.ConverterRegistry;
 import org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.converters.FieldConverter;
 import org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.validators.FieldSelector;
@@ -42,6 +43,13 @@ public class AJEntityClass extends Model {
   public static final String ROSTER_ID = "roster_id";
   public static final int CURRENT_VERSION = 3;
   public static final String INVITEES = "invitees";
+
+  // Dummy field names for Content Visibility
+  public static final String CV_UNITS = "units";
+  public static final String CV_LESSONS = "lessons";
+  public static final String CV_COLLECTIONS = "collections";
+  public static final String CV_ASSESSMENTS = "assessments";
+  public static final Set<String> CV_FIELDS = new HashSet<>(Arrays.asList(CV_ASSESSMENTS, CV_COLLECTIONS, CV_LESSONS, CV_UNITS));
 
   public static final String CLASS_SHARING_TYPE_NAME = "class_sharing_type";
   public static final String CLASS_SHARING_TYPE_OPEN = "open";
@@ -113,6 +121,10 @@ public class AJEntityClass extends Model {
     validatorMap.put(CREATOR_SYSTEM, (value) -> FieldValidator.validateStringIfPresent(value, 255));
     validatorMap.put(ROSTER_ID, (value) -> FieldValidator.validateStringIfPresent(value, 512));
     validatorMap.put(INVITEES, (value) -> FieldValidator.validateDeepJsonArrayIfPresent(value, FieldValidator::validateUuid));
+    validatorMap.put(CV_ASSESSMENTS, (value) -> FieldValidator.validateDeepJsonArray(value, FieldValidator::validateUuid));
+    validatorMap.put(CV_COLLECTIONS, (value) -> FieldValidator.validateDeepJsonArray(value, FieldValidator::validateUuid));
+    validatorMap.put(CV_LESSONS, (value) -> FieldValidator.validateDeepJsonArray(value, FieldValidator::validateUuid));
+    validatorMap.put(CV_UNITS, (value) -> FieldValidator.validateDeepJsonArray(value, FieldValidator::validateUuid));
     return Collections.unmodifiableMap(validatorMap);
   }
 
@@ -166,6 +178,9 @@ public class AJEntityClass extends Model {
     };
   }
 
+  public static FieldSelector contentVisibilityFieldSelector() {
+    return () -> Collections.unmodifiableSet(CV_FIELDS);
+  }
 
   public static ValidatorRegistry getValidatorRegistry() {
     return new ClassValidationRegistry();
@@ -175,6 +190,14 @@ public class AJEntityClass extends Model {
     return new ClassConverterRegistry();
   }
 
+  public void setContentVisibility(JsonObject visibility) {
+    FieldConverter fc = converterRegistry.get(CONTENT_VISIBILITY);
+    if (fc != null) {
+      this.set(CONTENT_VISIBILITY, fc.convertField(visibility.toString()));
+    } else {
+      this.set(CONTENT_VISIBILITY, visibility.toString());
+    }
+  }
 
   public void setModifierId(String modifier) {
     FieldConverter fc = converterRegistry.get(MODIFIER_ID);

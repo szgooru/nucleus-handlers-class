@@ -67,6 +67,11 @@ class AJClassRepo implements ClassRepo {
   }
 
   @Override
+  public MessageResponse setContentVisibility() {
+    return TransactionExecutor.executeTransaction(DBHandlerBuilder.buildSetContentVisibilityHandler(context));
+  }
+
+  @Override
   public MessageResponse updateCollaboratorForClass() {
     return TransactionExecutor.executeTransaction(DBHandlerBuilder.buildUpdateCollaboratorForClassHandler(context));
   }

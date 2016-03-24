@@ -54,4 +54,8 @@ public final class DBHandlerBuilder {
   public static DBHandler buildUpdateCollaboratorForClassHandler(ProcessorContext context) {
     return new UpdateCollaboratorForClassHandler(context);
   }
+
+  public static DBHandler buildSetContentVisibilityHandler(ProcessorContext context) {
+    return new ContentVisibilityHandler(context);
+  }
 }

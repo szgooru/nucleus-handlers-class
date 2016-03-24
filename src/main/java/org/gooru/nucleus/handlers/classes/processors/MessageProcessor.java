@@ -20,8 +20,6 @@ class MessageProcessor implements Processor {
   private String userId;
   private JsonObject prefs;
   private JsonObject request;
-  private String studentId;
-  private String courseId;
 
 
   public MessageProcessor(Message<Object> message) {
@@ -74,6 +72,9 @@ class MessageProcessor implements Processor {
         case MessageConstants.MSG_OP_CLASS_MEMBERS_GET:
           result = listClassMembers();
           break;
+        case MessageConstants.MSG_OP_CLASS_SET_CONTENT_VISIBILITY:
+          result = setContentVisibility();
+          break;
         default:
           LOGGER.error("Invalid operation type passed in, not able to handle");
           return MessageResponseFactory.createInvalidRequestResponse(RESOURCE_BUNDLE.getString("invalid.operation"));
@@ -83,6 +84,14 @@ class MessageProcessor implements Processor {
       LOGGER.error("Unhandled exception in processing", e);
       return MessageResponseFactory.createInternalErrorResponse(RESOURCE_BUNDLE.getString("unexpected.error"));
     }
+  }
+
+  private MessageResponse setContentVisibility() {
+    ProcessorContext context = createContext();
+    if (!ProcessorContextHelper.validateContext(context)) {
+      return MessageResponseFactory.createInvalidRequestResponse(RESOURCE_BUNDLE.getString("invalid.class"));
+    }
+    return RepoBuilder.buildClassRepo(context).setContentVisibility();
   }
 
   private MessageResponse listClassMembers() {

@@ -28,4 +28,6 @@ public interface ClassRepo {
   MessageResponse associateCourseWithClass();
 
   MessageResponse updateCollaboratorForClass();
+
+  MessageResponse setContentVisibility();
 }
