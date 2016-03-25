@@ -127,10 +127,6 @@ class FetchClassesForUserHandler implements DBHandler {
   }
 
   private ExecutionResult<MessageResponse> populateClassDetails(JsonObject result) {
-    StringBuilder builder = new StringBuilder(classIdList.size() * context.userId().length() + 16);
-    for (String classId : classIdList) {
-      builder.append('"').append(classId).append('"');
-    }
     LazyList<AJEntityClass> classes =
       AJEntityClass.where(AJEntityClass.FETCH_MULTIPLE_QUERY_FILTER, Utils.convertListToPostgresArrayStringRepresentation(classIdList));
     JsonArray classDetails =
