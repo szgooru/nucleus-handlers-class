@@ -7,6 +7,8 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Created by ashish on 28/1/16.
@@ -114,4 +116,11 @@ public interface FieldValidator {
   }
 
   boolean validateField(Object value);
+
+  Pattern EMAIL_PATTERN = Pattern.compile("^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$");
+
+  static boolean validateEmail(Object o) {
+    Matcher matcher = EMAIL_PATTERN.matcher((String) o);
+    return matcher.matches();
+  }
 }

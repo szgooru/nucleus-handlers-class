@@ -120,7 +120,7 @@ public class AJEntityClass extends Model {
     validatorMap.put(COLLABORATOR, (value) -> FieldValidator.validateDeepJsonArrayIfPresent(value, FieldValidator::validateUuid));
     validatorMap.put(CREATOR_SYSTEM, (value) -> FieldValidator.validateStringIfPresent(value, 255));
     validatorMap.put(ROSTER_ID, (value) -> FieldValidator.validateStringIfPresent(value, 512));
-    validatorMap.put(INVITEES, (value) -> FieldValidator.validateDeepJsonArrayIfPresent(value, FieldValidator::validateUuid));
+    validatorMap.put(INVITEES, (value) -> FieldValidator.validateDeepJsonArrayIfPresent(value, FieldValidator::validateEmail));
     validatorMap.put(CV_ASSESSMENTS, (value) -> FieldValidator.validateDeepJsonArray(value, FieldValidator::validateUuid));
     validatorMap.put(CV_COLLECTIONS, (value) -> FieldValidator.validateDeepJsonArray(value, FieldValidator::validateUuid));
     validatorMap.put(CV_LESSONS, (value) -> FieldValidator.validateDeepJsonArray(value, FieldValidator::validateUuid));

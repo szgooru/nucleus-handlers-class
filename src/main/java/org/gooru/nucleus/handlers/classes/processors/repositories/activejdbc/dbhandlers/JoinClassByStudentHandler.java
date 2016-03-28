@@ -88,7 +88,7 @@ class JoinClassByStudentHandler implements DBHandler {
         ExecutionResult.ExecutionStatus.FAILED);
     }
     // Now get the membership record for that user
-    LazyList<AJClassMember> members = AJClassMember.where(AJClassMember.FETCH_FOR_USER_QUERY_FILTER, this.classId, this.email);
+    LazyList<AJClassMember> members = AJClassMember.where(AJClassMember.FETCH_FOR_EMAIL_QUERY_FILTER, this.classId, this.email);
     if (!members.isEmpty()) {
       this.membership = members.get(0);
     } else {
