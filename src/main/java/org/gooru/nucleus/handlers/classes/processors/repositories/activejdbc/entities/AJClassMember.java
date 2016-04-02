@@ -40,7 +40,10 @@ public class AJClassMember extends Model {
   public static final String FETCH_FOR_EMAIL_QUERY_FILTER = "class_id = ?::uuid and email = ?";
   public static final String FETCH_ALL_QUERY_FILTER = "class_id = ?::uuid";
   public static final String DELETE_MEMBERSHIP_FOR_CLASS_QUERY = "delete from class_member where class_id = ?::uuid";
-  public static final String FETCH_USER_MEMBERSHIP_QUERY = "select class_id, class_member_status from class_member where user_id = ?::uuid";
+  public static final String FETCH_USER_MEMBERSHIP_QUERY =
+    "select class_id from class_member where user_id = ?::uuid and class_member_status = 'joined'::class_member_status_type";
+  public static final String FETCH_MEMBERSHIP_COUNT_FOR_CLASSES =
+    "select class_id, count(class_id) from class_member where class_member_status = 'joined' and class_id = ANY(?::uuid[]) group by class_id";
 
   public void setClassId(String classId) {
     if (classId != null && !classId.isEmpty()) {

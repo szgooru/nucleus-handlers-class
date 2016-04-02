@@ -12,6 +12,7 @@ import org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.for
 import org.gooru.nucleus.handlers.classes.processors.responses.ExecutionResult;
 import org.gooru.nucleus.handlers.classes.processors.responses.MessageResponse;
 import org.gooru.nucleus.handlers.classes.processors.responses.MessageResponseFactory;
+import org.javalite.activejdbc.Base;
 import org.javalite.activejdbc.DBException;
 import org.javalite.activejdbc.LazyList;
 import org.slf4j.Logger;
@@ -19,6 +20,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.ResourceBundle;
 
 /**
@@ -32,8 +34,8 @@ class FetchClassesForUserHandler implements DBHandler {
   private static final String RESPONSE_BUCKET_OWNER = "owner";
   private static final String RESPONSE_BUCKET_COLLABORATOR = "collaborator";
   private static final String RESPONSE_BUCKET_MEMBER = "member";
-  private static final String RESPONSE_BUCKET_INVITED = "invited";
   private static final String RESPONSE_BUCKET_CLASSES = "classes";
+  private static final String RESPONSE_BUCKET_MEMBER_COUNT = "member_count";
 
   FetchClassesForUserHandler(ProcessorContext context) {
     this.context = context;
@@ -63,6 +65,10 @@ class FetchClassesForUserHandler implements DBHandler {
       return response;
     }
     response = populateMembershipClassesId(result);
+    if (response.hasFailed()) {
+      return response;
+    }
+    response = populateClassMemberCounts(result);
     if (response.hasFailed()) {
       return response;
     }
@@ -103,21 +109,27 @@ class FetchClassesForUserHandler implements DBHandler {
     try {
       LazyList<AJClassMember> members = AJClassMember.findBySQL(AJClassMember.FETCH_USER_MEMBERSHIP_QUERY, context.userId());
       JsonArray memberClassIdArray = new JsonArray();
-      JsonArray invitedClassIdArray = new JsonArray();
       for (AJClassMember member : members) {
         String classId = member.getString(AJClassMember.CLASS_ID);
-        if (AJClassMember.CLASS_MEMBER_STATUS_TYPE_INVITED.equalsIgnoreCase(member.getString(AJClassMember.CLASS_MEMBER_STATUS))) {
-          invitedClassIdArray.add(classId);
-          classIdList.add(classId);
-        } else if (AJClassMember.CLASS_MEMBER_STATUS_TYPE_JOINED.equalsIgnoreCase(member.getString(AJClassMember.CLASS_MEMBER_STATUS))) {
-          memberClassIdArray.add(classId);
-          classIdList.add(classId);
-        } else {
-          LOGGER.warn("Invalid membership status for class '{}' and user '{}'", classId, context.userId());
-        }
+        memberClassIdArray.add(classId);
+        classIdList.add(classId);
       }
       result.put(RESPONSE_BUCKET_MEMBER, memberClassIdArray);
-      result.put(RESPONSE_BUCKET_INVITED, invitedClassIdArray);
+      return new ExecutionResult<>(null, ExecutionResult.ExecutionStatus.CONTINUE_PROCESSING);
+    } catch (DBException dbe) {
+      LOGGER.warn("Unable to fetch membership classes for user '{}'", context.userId(), dbe);
+      return new ExecutionResult<>(MessageResponseFactory.createInternalErrorResponse(RESOURCE_BUNDLE.getString("error.from.store")),
+        ExecutionResult.ExecutionStatus.FAILED);
+    }
+  }
+
+  private ExecutionResult<MessageResponse> populateClassMemberCounts(JsonObject result) {
+    try {
+      JsonObject memberCount = new JsonObject();
+      List<Map> rs =
+        Base.findAll(AJClassMember.FETCH_MEMBERSHIP_COUNT_FOR_CLASSES, Utils.convertListToPostgresArrayStringRepresentation(classIdList));
+      rs.forEach(map -> memberCount.put(map.get("class_id").toString(), map.get("count")));
+      result.put(RESPONSE_BUCKET_MEMBER_COUNT, memberCount);
       return new ExecutionResult<>(null, ExecutionResult.ExecutionStatus.CONTINUE_PROCESSING);
     } catch (DBException dbe) {
       LOGGER.warn("Unable to fetch membership classes for user '{}'", context.userId(), dbe);
