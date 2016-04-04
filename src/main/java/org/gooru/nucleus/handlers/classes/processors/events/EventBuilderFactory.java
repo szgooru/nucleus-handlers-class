@@ -50,8 +50,8 @@ public final class EventBuilderFactory {
                                  .put(EVENT_BODY, new JsonObject().put(CLASS_ID, classId).put(STUDENT_ID, studentId));
   }
 
-  public static EventBuilder getCollaboratorUpdatedEventBuilder(String classId) {
-    return () -> new JsonObject().put(EVENT_NAME, EVT_CLASS_COLLABORATOR_UPDATE).put(EVENT_BODY, new JsonObject().put(CLASS_ID, classId));
+  public static EventBuilder getCollaboratorUpdatedEventBuilder(String classId, JsonObject collaborators) {
+    return () -> new JsonObject().put(EVENT_NAME, EVT_CLASS_COLLABORATOR_UPDATE).put(EVENT_BODY, collaborators.put(CLASS_ID, classId));
   }
 
   // TODO: Decide on how to pass multiple class id

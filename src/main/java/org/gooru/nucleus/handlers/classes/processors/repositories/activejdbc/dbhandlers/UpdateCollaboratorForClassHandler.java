@@ -1,5 +1,6 @@
 package org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.dbhandlers;
 
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import org.gooru.nucleus.handlers.classes.constants.MessageConstants;
 import org.gooru.nucleus.handlers.classes.processors.ProcessorContext;
@@ -24,6 +25,8 @@ import java.util.ResourceBundle;
 class UpdateCollaboratorForClassHandler implements DBHandler {
   private static final Logger LOGGER = LoggerFactory.getLogger(UpdateCollaboratorForClassHandler.class);
   private static final ResourceBundle RESOURCE_BUNDLE = ResourceBundle.getBundle("messages");
+  private static final String COLLABORATORS_REMOVED = "collaborators.removed";
+  private static final String COLLABORATORS_ADDED = "collaborators.added";
   private final ProcessorContext context;
   private AJEntityClass entityClass;
 
@@ -84,6 +87,7 @@ class UpdateCollaboratorForClassHandler implements DBHandler {
 
   @Override
   public ExecutionResult<MessageResponse> executeRequest() {
+    JsonObject diffCollaborators = calculateDiffOfCollaborators();
     this.entityClass.setModifierId(context.userId());
     // Now auto populate is done, we need to setup the converter machinery
     new DefaultAJEntityClassEntityBuilder().build(this.entityClass, context.request(), AJEntityClass.getConverterRegistry());
@@ -98,14 +102,51 @@ class UpdateCollaboratorForClassHandler implements DBHandler {
         return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(errors), ExecutionResult.ExecutionStatus.FAILED);
       }
     }
-    return new ExecutionResult<>(MessageResponseFactory
-      .createNoContentResponse(RESOURCE_BUNDLE.getString("updated"), EventBuilderFactory.getCollaboratorUpdatedEventBuilder(context.classId())),
-      ExecutionResult.ExecutionStatus.SUCCESSFUL);
+    return new ExecutionResult<>(MessageResponseFactory.createNoContentResponse(RESOURCE_BUNDLE.getString("updated"),
+      EventBuilderFactory.getCollaboratorUpdatedEventBuilder(context.classId(), diffCollaborators)), ExecutionResult.ExecutionStatus.SUCCESSFUL);
   }
 
   @Override
   public boolean handlerReadOnly() {
     return false;
+  }
+
+  private JsonObject calculateDiffOfCollaborators() {
+    JsonObject result = new JsonObject();
+    // Find current collaborators
+    String currentCollaboratorsAsString = this.entityClass.getString(AJEntityClass.COLLABORATOR);
+    JsonArray currentCollaborators;
+    currentCollaborators =
+      currentCollaboratorsAsString != null && !currentCollaboratorsAsString.isEmpty() ? new JsonArray(currentCollaboratorsAsString) : new JsonArray();
+    JsonArray newCollaborators = this.context.request().getJsonArray(AJEntityClass.COLLABORATOR);
+    if (currentCollaborators.isEmpty() && !newCollaborators.isEmpty()) {
+      // Adding all
+      result.put(COLLABORATORS_ADDED, newCollaborators.copy());
+      result.put(COLLABORATORS_REMOVED, new JsonArray());
+    } else if (!currentCollaborators.isEmpty() && newCollaborators.isEmpty()) {
+      // Removing all
+      result.put(COLLABORATORS_ADDED, new JsonArray());
+      result.put(COLLABORATORS_REMOVED, currentCollaborators.copy());
+    } else if (!currentCollaborators.isEmpty() && !newCollaborators.isEmpty()) {
+      // Do the diffing
+      JsonArray toBeAdded = new JsonArray();
+      JsonArray toBeDeleted = currentCollaborators.copy();
+      for (Object o : newCollaborators) {
+        if (toBeDeleted.contains(o)) {
+          toBeDeleted.remove(o);
+        } else {
+          toBeAdded.add(o);
+        }
+      }
+      result.put(COLLABORATORS_ADDED, toBeAdded);
+      result.put(COLLABORATORS_REMOVED, toBeDeleted);
+    } else {
+      // WHAT ????
+      LOGGER.warn("Updating collaborator with empty payload when current collaborator is empty for assessment '{}'", this.context.classId());
+      result.put(COLLABORATORS_ADDED, new JsonArray());
+      result.put(COLLABORATORS_REMOVED, new JsonArray());
+    }
+    return result;
   }
 
   private static class DefaultPayloadValidator implements PayloadValidator {
