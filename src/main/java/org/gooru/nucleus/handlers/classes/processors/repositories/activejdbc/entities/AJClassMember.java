@@ -32,6 +32,7 @@ public class AJClassMember extends Model {
   public static final String CLASS_MEMBER_STATUS_TYPE = "class_member_status_type";
   public static final String CLASS_MEMBER_STATUS_TYPE_INVITED = "invited";
   public static final String CLASS_MEMBER_STATUS_TYPE_JOINED = "joined";
+  public static final String TABLE_CLASS_MEMBER = "class_member";
 
   public static final String INVITE_STUDENT_QUERY =
     "insert into class_member (class_id, email, class_member_status, creator_system) values (?::uuid, ?, ?::class_member_status_type, ?)";
@@ -43,7 +44,10 @@ public class AJClassMember extends Model {
   public static final String FETCH_USER_MEMBERSHIP_QUERY =
     "select class_id from class_member where user_id = ?::uuid and class_member_status = 'joined'::class_member_status_type";
   public static final String FETCH_MEMBERSHIP_COUNT_FOR_CLASSES =
-    "select class_id, count(class_id) from class_member where class_member_status = 'joined' and class_id = ANY(?::uuid[]) group by class_id";
+    "select class_id, count(class_id) from class_member where class_member_status = 'joined'::class_member_status_type and class_id = ANY" +
+      "(?::uuid[]) group by class_id";
+  public static final String FETCH_MEMBERSHIP_COUNT_FOR_CLASS_QUERY =
+    "class_member_status = 'joined'::class_member_status_type and class_id = ?::uuid";
 
   public void setClassId(String classId) {
     if (classId != null && !classId.isEmpty()) {

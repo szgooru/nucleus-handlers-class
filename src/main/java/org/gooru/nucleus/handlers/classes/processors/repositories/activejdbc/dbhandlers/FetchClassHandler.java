@@ -3,11 +3,13 @@ package org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.db
 import io.vertx.core.json.JsonObject;
 import org.gooru.nucleus.handlers.classes.processors.ProcessorContext;
 import org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.dbauth.AuthorizerBuilder;
+import org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.entities.AJClassMember;
 import org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.entities.AJEntityClass;
 import org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.formatter.JsonFormatterBuilder;
 import org.gooru.nucleus.handlers.classes.processors.responses.ExecutionResult;
 import org.gooru.nucleus.handlers.classes.processors.responses.MessageResponse;
 import org.gooru.nucleus.handlers.classes.processors.responses.MessageResponseFactory;
+import org.javalite.activejdbc.Base;
 import org.javalite.activejdbc.DBException;
 import org.javalite.activejdbc.LazyList;
 import org.slf4j.Logger;
@@ -21,6 +23,7 @@ import java.util.ResourceBundle;
 class FetchClassHandler implements DBHandler {
   private static final Logger LOGGER = LoggerFactory.getLogger(FetchClassHandler.class);
   private static final ResourceBundle RESOURCE_BUNDLE = ResourceBundle.getBundle("messages");
+  private static final String MEMBER_COUNT = "member_count";
   private final ProcessorContext context;
   private AJEntityClass entityClass;
 
@@ -64,10 +67,17 @@ class FetchClassHandler implements DBHandler {
 
   @Override
   public ExecutionResult<MessageResponse> executeRequest() {
-    // FIXME: 12/2/16 Verify if we need to send student count as well here
-    JsonObject response =
-      new JsonObject(JsonFormatterBuilder.buildSimpleJsonFormatter(false, AJEntityClass.FETCH_QUERY_FIELD_LIST).toJson(this.entityClass));
-    return new ExecutionResult<>(MessageResponseFactory.createOkayResponse(response), ExecutionResult.ExecutionStatus.SUCCESSFUL);
+    try {
+      JsonObject response =
+        new JsonObject(JsonFormatterBuilder.buildSimpleJsonFormatter(false, AJEntityClass.FETCH_QUERY_FIELD_LIST).toJson(this.entityClass));
+      Long count = Base.count(AJClassMember.TABLE_CLASS_MEMBER, AJClassMember.FETCH_MEMBERSHIP_COUNT_FOR_CLASS_QUERY, context.classId());
+      response.put(MEMBER_COUNT, count);
+      return new ExecutionResult<>(MessageResponseFactory.createOkayResponse(response), ExecutionResult.ExecutionStatus.SUCCESSFUL);
+    } catch (DBException dbe) {
+      LOGGER.warn("Unable to fetch membership count for class '{}'", context.classId(), dbe);
+      return new ExecutionResult<>(MessageResponseFactory.createInternalErrorResponse(RESOURCE_BUNDLE.getString("error.from.store")),
+        ExecutionResult.ExecutionStatus.FAILED);
+    }
   }
 
   @Override
