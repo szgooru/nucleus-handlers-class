@@ -36,7 +36,7 @@ public final class ProcessorContextHelper {
   public static boolean validateContextWithCourse(ProcessorContext context) {
     return validateContextOnlyCourse(context) && validateContext(context);
   }
-  
+
   public static boolean validateContextWithStudentId(ProcessorContext context) {
     return validateContext(context) && validateContextOnlyStudentId(context);
   }
@@ -68,13 +68,10 @@ public final class ProcessorContextHelper {
     }
     return true;
   }
-  
+
   private static boolean validateEmail(String email) {
     // Rudimentary check for presence of @
-    if (email.indexOf('@') != -1) {
-      return true;
-    }
-    return false;
+    return email.indexOf('@') != -1;
   }
 
   private static boolean validateContextOnlyStudentId(ProcessorContext context) {
