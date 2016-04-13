@@ -39,7 +39,6 @@ public final class EventBuilderFactory {
     return () -> new JsonObject().put(EVENT_NAME, EVT_CLASS_UPDATE).put(EVENT_BODY, new JsonObject().put(CLASS_ID, classId));
   }
 
-  // TODO: Decide on how to pass on students' ID
   public static EventBuilder getStudentInvitedEventBuilder(String classId, JsonArray invitees) {
     return () -> new JsonObject().put(EVENT_NAME, EVT_CLASS_STUDENT_INVITE)
                                  .put(EVENT_BODY, new JsonObject().put(CLASS_ID, classId).put(INVITEES, invitees));
@@ -54,15 +53,14 @@ public final class EventBuilderFactory {
     return () -> new JsonObject().put(EVENT_NAME, EVT_CLASS_COLLABORATOR_UPDATE).put(EVENT_BODY, collaborators.put(CLASS_ID, classId));
   }
 
-  // TODO: Decide on how to pass multiple class id
   public static EventBuilder getCourseAssignedEventBuilder(String classId, String courseId) {
     return () -> new JsonObject().put(EVENT_NAME, EVT_CLASS_COURSE_ASSIGNED)
                                  .put(EVENT_BODY, new JsonObject().put(CLASS_ID, classId).put(COURSE_ID, courseId));
   }
 
   // TODO: Decide on how to pass the content's structure
-  public static EventBuilder getContentVisibleEventBuilder(String classId) {
-    return () -> new JsonObject().put(EVENT_NAME, EVT_CLASS_CONTENT_VISIBLE).put(EVENT_BODY, new JsonObject().put(CLASS_ID, classId));
+  public static EventBuilder getContentVisibleEventBuilder(String classId, JsonObject visibleContents) {
+    return () -> new JsonObject().put(EVENT_NAME, EVT_CLASS_CONTENT_VISIBLE).put(EVENT_BODY, visibleContents.put(CLASS_ID, classId));
   }
 
 }

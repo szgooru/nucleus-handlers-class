@@ -37,23 +37,23 @@ public class ContentVisibilityHandler implements DBHandler {
     if (context.classId() == null || context.classId().isEmpty()) {
       LOGGER.warn("Missing class");
       return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse(RESOURCE_BUNDLE.getString("missing.class.id")),
-        ExecutionResult.ExecutionStatus.FAILED);
+          ExecutionResult.ExecutionStatus.FAILED);
     }
     // The user should not be anonymous
     if (context.userId() == null || context.userId().isEmpty() || context.userId().equalsIgnoreCase(MessageConstants.MSG_USER_ANONYMOUS)) {
       LOGGER.warn("Anonymous user attempting to invite student to class");
       return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(RESOURCE_BUNDLE.getString("not.allowed")),
-        ExecutionResult.ExecutionStatus.FAILED);
+          ExecutionResult.ExecutionStatus.FAILED);
     }
     // Payload should not be empty
     if (context.request() == null || context.request().isEmpty()) {
       LOGGER.warn("Empty payload supplied to student invite in class");
       return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse(RESOURCE_BUNDLE.getString("empty.payload")),
-        ExecutionResult.ExecutionStatus.FAILED);
+          ExecutionResult.ExecutionStatus.FAILED);
     }
     // Our validators should certify this
-    JsonObject errors = new DefaultPayloadValidator()
-      .validatePayload(context.request(), AJEntityClass.contentVisibilityFieldSelector(), AJEntityClass.getValidatorRegistry());
+    JsonObject errors = new DefaultPayloadValidator().validatePayload(context.request(), AJEntityClass.contentVisibilityFieldSelector(),
+        AJEntityClass.getValidatorRegistry());
     if (errors != null && !errors.isEmpty()) {
       LOGGER.warn("Validation errors for request");
       return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(errors), ExecutionResult.ExecutionStatus.FAILED);
@@ -68,15 +68,15 @@ public class ContentVisibilityHandler implements DBHandler {
     if (classes.isEmpty()) {
       LOGGER.warn("Not able to find class '{}'", this.context.classId());
       return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(RESOURCE_BUNDLE.getString("not.found")),
-        ExecutionResult.ExecutionStatus.FAILED);
+          ExecutionResult.ExecutionStatus.FAILED);
     }
     this.entityClass = classes.get(0);
     // Class should be of current version and Class should not be archived
     if (!entityClass.isCurrentVersion() || entityClass.isArchived()) {
       LOGGER.warn("Class '{}' is either archived or not of current version", context.classId());
       return new ExecutionResult<>(
-        MessageResponseFactory.createInvalidRequestResponse(RESOURCE_BUNDLE.getString("class.archived.or.incorrect.version")),
-        ExecutionResult.ExecutionStatus.FAILED);
+          MessageResponseFactory.createInvalidRequestResponse(RESOURCE_BUNDLE.getString("class.archived.or.incorrect.version")),
+          ExecutionResult.ExecutionStatus.FAILED);
     }
     // Check authorization
     ExecutionResult<MessageResponse> result = AuthorizerBuilder.buildContentVisibilityAuthorizer(this.context).authorize(entityClass);
@@ -87,9 +87,8 @@ public class ContentVisibilityHandler implements DBHandler {
     String courseId = this.entityClass.getString(AJEntityClass.COURSE_ID);
     if (courseId == null) {
       LOGGER.error("Class '{}' is not assigned to course, hence cannot set content visibility", context.classId());
-      return new ExecutionResult<>(
-        MessageResponseFactory.createInvalidRequestResponse(RESOURCE_BUNDLE.getString("class.without.course")),
-        ExecutionResult.ExecutionStatus.FAILED);
+      return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse(RESOURCE_BUNDLE.getString("class.without.course")),
+          ExecutionResult.ExecutionStatus.FAILED);
     }
     // Now validate the payload with DB
     return ContentVisibilityHelper.validatePayloadWithDB(context.request(), courseId);
@@ -112,9 +111,8 @@ public class ContentVisibilityHandler implements DBHandler {
         return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(errors), ExecutionResult.ExecutionStatus.FAILED);
       }
     }
-    return new ExecutionResult<>(MessageResponseFactory
-      .createNoContentResponse(RESOURCE_BUNDLE.getString("updated"), EventBuilderFactory.getContentVisibleEventBuilder(context.classId())),
-      ExecutionResult.ExecutionStatus.SUCCESSFUL);
+    return new ExecutionResult<>(MessageResponseFactory.createNoContentResponse(RESOURCE_BUNDLE.getString("updated"),
+        EventBuilderFactory.getContentVisibleEventBuilder(context.classId(), context.request())), ExecutionResult.ExecutionStatus.SUCCESSFUL);
 
   }
 

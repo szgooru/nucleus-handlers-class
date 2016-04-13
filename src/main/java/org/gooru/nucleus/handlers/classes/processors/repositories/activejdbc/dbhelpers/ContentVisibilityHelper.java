@@ -26,7 +26,6 @@ public final class ContentVisibilityHelper {
   }
 
   public static ExecutionResult<MessageResponse> validatePayloadWithDB(JsonObject payload, String courseId) {
-    // TODO: Implement this
     JsonArray contents = payload.getJsonArray(AJEntityClass.CV_UNITS);
     ExecutionResult<MessageResponse> result = validateUnitsExistence(contents, courseId);
     if (result.hasFailed()) {
