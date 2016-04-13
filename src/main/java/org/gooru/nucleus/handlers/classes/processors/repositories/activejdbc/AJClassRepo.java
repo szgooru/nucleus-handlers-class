@@ -75,4 +75,14 @@ class AJClassRepo implements ClassRepo {
   public MessageResponse updateCollaboratorForClass() {
     return TransactionExecutor.executeTransaction(DBHandlerBuilder.buildUpdateCollaboratorForClassHandler(context));
   }
+
+  @Override
+  public MessageResponse removeInviteForStudentFromClass() {
+    return TransactionExecutor.executeTransaction(DBHandlerBuilder.buildRemoveInviteHandler(context));
+  }
+
+  @Override
+  public MessageResponse removeStudentFromClass() {
+    return TransactionExecutor.executeTransaction(DBHandlerBuilder.buildRemoveStudentHandler(context));
+  }
 }

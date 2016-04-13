@@ -30,4 +30,8 @@ public interface ClassRepo {
   MessageResponse updateCollaboratorForClass();
 
   MessageResponse setContentVisibility();
+
+  MessageResponse removeInviteForStudentFromClass();
+
+  MessageResponse removeStudentFromClass();
 }

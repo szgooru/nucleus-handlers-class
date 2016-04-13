@@ -48,7 +48,7 @@ class JoinClassByStudentHandler implements DBHandler {
       return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(RESOURCE_BUNDLE.getString("not.allowed")),
         ExecutionResult.ExecutionStatus.FAILED);
     }
-    this.email = context.prefs().getString(MessageConstants.EMAIL);
+    this.email = context.prefs().getString(MessageConstants.EMAIL_ID);
     if (email == null || email.isEmpty() || !email.contains("@")) {
       LOGGER.error("Incorrect authroization, email not available");
       return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(RESOURCE_BUNDLE.getString("email.not.available")),

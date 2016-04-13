@@ -13,6 +13,8 @@ public final class EventBuilderFactory {
   private static final String EVT_CLASS_DELETE = "event.class.delete";
   private static final String EVT_CLASS_STUDENT_INVITE = "event.class.student.invite";
   private static final String EVT_CLASS_STUDENT_JOIN = "event.class.student.join";
+  private static final String EVT_CLASS_STUDENT_INVITE_REMOVAL = "event.class.student.invite.remove";
+  private static final String EVT_CLASS_STUDENT_REMOVAL = "event.class.student.remove";
   private static final String EVT_CLASS_COLLABORATOR_UPDATE = "event.class.collaborator.join";
   private static final String EVT_CLASS_COURSE_ASSIGNED = "event.class.course.assigned";
   private static final String EVT_CLASS_CONTENT_VISIBLE = "event.class.content.visible";
@@ -22,6 +24,7 @@ public final class EventBuilderFactory {
   private static final String STUDENT_ID = "studentId";
   private static final String COURSE_ID = "courseId";
   private static final String INVITEES = "invitees";
+  private static final String EMAIL = "email";
 
   private EventBuilderFactory() {
     throw new AssertionError();
@@ -40,13 +43,13 @@ public final class EventBuilderFactory {
   }
 
   public static EventBuilder getStudentInvitedEventBuilder(String classId, JsonArray invitees) {
-    return () -> new JsonObject().put(EVENT_NAME, EVT_CLASS_STUDENT_INVITE)
-                                 .put(EVENT_BODY, new JsonObject().put(CLASS_ID, classId).put(INVITEES, invitees));
+    return () -> new JsonObject().put(EVENT_NAME, EVT_CLASS_STUDENT_INVITE).put(EVENT_BODY,
+        new JsonObject().put(CLASS_ID, classId).put(INVITEES, invitees));
   }
 
   public static EventBuilder getStudentJoinedEventBuilder(String classId, String studentId) {
-    return () -> new JsonObject().put(EVENT_NAME, EVT_CLASS_STUDENT_JOIN)
-                                 .put(EVENT_BODY, new JsonObject().put(CLASS_ID, classId).put(STUDENT_ID, studentId));
+    return () -> new JsonObject().put(EVENT_NAME, EVT_CLASS_STUDENT_JOIN).put(EVENT_BODY,
+        new JsonObject().put(CLASS_ID, classId).put(STUDENT_ID, studentId));
   }
 
   public static EventBuilder getCollaboratorUpdatedEventBuilder(String classId, JsonObject collaborators) {
@@ -54,8 +57,18 @@ public final class EventBuilderFactory {
   }
 
   public static EventBuilder getCourseAssignedEventBuilder(String classId, String courseId) {
-    return () -> new JsonObject().put(EVENT_NAME, EVT_CLASS_COURSE_ASSIGNED)
-                                 .put(EVENT_BODY, new JsonObject().put(CLASS_ID, classId).put(COURSE_ID, courseId));
+    return () -> new JsonObject().put(EVENT_NAME, EVT_CLASS_COURSE_ASSIGNED).put(EVENT_BODY,
+        new JsonObject().put(CLASS_ID, classId).put(COURSE_ID, courseId));
+  }
+
+  public static EventBuilder getInviteRemovalEventBuilder(String classId, String email) {
+    return () -> new JsonObject().put(EVENT_NAME, EVT_CLASS_STUDENT_INVITE_REMOVAL).put(EVENT_BODY,
+        new JsonObject().put(CLASS_ID, classId).put(EMAIL, email));
+  }
+
+  public static EventBuilder getStudentRemovalEventBuilder(String classId, String studentId) {
+    return () -> new JsonObject().put(EVENT_NAME, EVT_CLASS_STUDENT_REMOVAL).put(EVENT_BODY,
+        new JsonObject().put(CLASS_ID, classId).put(STUDENT_ID, studentId));
   }
 
   // TODO: Decide on how to pass the content's structure

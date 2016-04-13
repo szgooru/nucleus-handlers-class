@@ -75,6 +75,12 @@ class MessageProcessor implements Processor {
         case MessageConstants.MSG_OP_CLASS_SET_CONTENT_VISIBILITY:
           result = setContentVisibility();
           break;
+        case MessageConstants.MSG_OP_CLASS_REMOVE_STUDENT:
+          result = removeStudentFromClass();
+          break;
+        case MessageConstants.MSG_OP_CLASS_INVITE_REMOVE:
+          result = removeInviteForStudentFromClass();
+          break;
         default:
           LOGGER.error("Invalid operation type passed in, not able to handle");
           return MessageResponseFactory.createInvalidRequestResponse(RESOURCE_BUNDLE.getString("invalid.operation"));
@@ -84,6 +90,22 @@ class MessageProcessor implements Processor {
       LOGGER.error("Unhandled exception in processing", e);
       return MessageResponseFactory.createInternalErrorResponse(RESOURCE_BUNDLE.getString("unexpected.error"));
     }
+  }
+
+  private MessageResponse removeInviteForStudentFromClass() {
+    ProcessorContext context = createContextWithStudentEmail();
+    if (!ProcessorContextHelper.validateContextWithStudentEmail(context)) {
+      return MessageResponseFactory.createInvalidRequestResponse(RESOURCE_BUNDLE.getString("invalid.class.student"));
+    }
+    return RepoBuilder.buildClassRepo(context).removeInviteForStudentFromClass();
+  }
+
+  private MessageResponse removeStudentFromClass() {
+    ProcessorContext context = createContextWithStudentId();
+    if (!ProcessorContextHelper.validateContextWithStudentId(context)) {
+      return MessageResponseFactory.createInvalidRequestResponse(RESOURCE_BUNDLE.getString("invalid.class.student"));
+    }
+    return RepoBuilder.buildClassRepo(context).removeStudentFromClass();
   }
 
   private MessageResponse setContentVisibility() {
@@ -194,6 +216,17 @@ class MessageProcessor implements Processor {
 
   }
 
+  private ProcessorContext createContextWithStudentId() {
+    String classId = message.headers().get(MessageConstants.CLASS_ID);
+    String studentId = message.headers().get(MessageConstants.USER_ID);
+    return new ProcessorContext.ProcessorContextBuilder(userId, prefs, request, classId, null).setStudentId(studentId).build();
+  }
+  
+  private ProcessorContext createContextWithStudentEmail() {
+    String classId = message.headers().get(MessageConstants.CLASS_ID);
+    String studentEmail = message.headers().get(MessageConstants.EMAIL);
+    return new ProcessorContext.ProcessorContextBuilder(userId, prefs, request, classId, null).setStudentEmail(studentEmail).build();
+  }
 
   private ExecutionResult<MessageResponse> validateAndInitialize() {
     if (message == null || !(message.body() instanceof JsonObject)) {

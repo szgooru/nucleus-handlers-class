@@ -58,4 +58,12 @@ public final class DBHandlerBuilder {
   public static DBHandler buildSetContentVisibilityHandler(ProcessorContext context) {
     return new ContentVisibilityHandler(context);
   }
+
+  public static DBHandler buildRemoveInviteHandler(ProcessorContext context) {
+    return new RemoveInviteHandler(context);
+  }
+
+  public static DBHandler buildRemoveStudentHandler(ProcessorContext context) {
+    return new RemoveStudentHandler(context);
+  }
 }

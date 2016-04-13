@@ -33,6 +33,8 @@ public final class MessageConstants {
   public static final String MSG_OP_CLASS_INVITE = "class.invite.user";
   public static final String MSG_OP_CLASS_COURSE_ASSOCIATION = "class.course.association";
   public static final String MSG_OP_CLASS_SET_CONTENT_VISIBILITY = "class.content.visibility.set";
+  public static final String MSG_OP_CLASS_INVITE_REMOVE = "class.invite.user.remove";
+  public static final String MSG_OP_CLASS_REMOVE_STUDENT = "class.join.removal";
 
 
   // Containers for different responses
@@ -43,7 +45,9 @@ public final class MessageConstants {
   public static final String COURSE_ID = "courseId";
   public static final String STUDENT_ID = "studentId";
   public static final String CLASS_CODE = "classCode";
-  public static final String EMAIL = "email_id";
+  public static final String EMAIL_ID = "email_id";
+  public static final String USER_ID = "userId";
+  public static final String EMAIL = "email";
 
   private MessageConstants() {
     throw new AssertionError();
