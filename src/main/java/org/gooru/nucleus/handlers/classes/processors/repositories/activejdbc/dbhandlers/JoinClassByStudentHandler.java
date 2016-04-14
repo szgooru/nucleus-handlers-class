@@ -131,7 +131,7 @@ class JoinClassByStudentHandler implements DBHandler {
         return membershipErrors();
       }
     }
-    return new ExecutionResult<>(MessageResponseFactory.createNoContentResponse(RESOURCE_BUNDLE.getString("joined"),
+    return new ExecutionResult<>(MessageResponseFactory.createCreatedResponse(this.classId,
       EventBuilderFactory.getStudentJoinedEventBuilder(this.classId, this.context.userId())), ExecutionResult.ExecutionStatus.SUCCESSFUL);
   }
 
