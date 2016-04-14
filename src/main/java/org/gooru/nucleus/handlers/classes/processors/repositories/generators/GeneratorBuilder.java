@@ -5,11 +5,11 @@ package org.gooru.nucleus.handlers.classes.processors.repositories.generators;
  */
 public final class GeneratorBuilder {
 
-  public static Generator<String> buildClassCodeGenerator() {
-    return new ClassCodeGenerator();
-  }
+    public static Generator<String> buildClassCodeGenerator() {
+        return new ClassCodeGenerator();
+    }
 
-  private GeneratorBuilder() {
-    throw new AssertionError();
-  }
+    private GeneratorBuilder() {
+        throw new AssertionError();
+    }
 }

@@ -8,11 +8,11 @@ import org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.AJC
  */
 public final class RepoBuilder {
 
-  private RepoBuilder() {
-    throw new AssertionError();
-  }
+    private RepoBuilder() {
+        throw new AssertionError();
+    }
 
-  public static ClassRepo buildClassRepo(ProcessorContext context) {
-    return AJClassRepoBuilder.buildClassRepo(context);
-  }
+    public static ClassRepo buildClassRepo(ProcessorContext context) {
+        return AJClassRepoBuilder.buildClassRepo(context);
+    }
 }

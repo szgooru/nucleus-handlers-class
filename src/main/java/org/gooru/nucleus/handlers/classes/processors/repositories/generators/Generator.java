@@ -5,6 +5,6 @@ package org.gooru.nucleus.handlers.classes.processors.repositories.generators;
  */
 public interface Generator<T> {
 
-  T generate();
+    T generate();
 
 }

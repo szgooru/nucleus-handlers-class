@@ -7,31 +7,31 @@ import org.gooru.nucleus.handlers.classes.processors.responses.MessageResponse;
  */
 public interface ClassRepo {
 
-  MessageResponse createClass();
+    MessageResponse createClass();
 
-  MessageResponse updateClass();
+    MessageResponse updateClass();
 
-  MessageResponse fetchClass();
+    MessageResponse fetchClass();
 
-  MessageResponse fetchClassMembers();
+    MessageResponse fetchClassMembers();
 
-  MessageResponse fetchClassesForCourse();
+    MessageResponse fetchClassesForCourse();
 
-  MessageResponse fetchClassesForUser();
+    MessageResponse fetchClassesForUser();
 
-  MessageResponse joinClassByStudent();
+    MessageResponse joinClassByStudent();
 
-  MessageResponse inviteStudentToClass();
+    MessageResponse inviteStudentToClass();
 
-  MessageResponse deleteClass();
+    MessageResponse deleteClass();
 
-  MessageResponse associateCourseWithClass();
+    MessageResponse associateCourseWithClass();
 
-  MessageResponse updateCollaboratorForClass();
+    MessageResponse updateCollaboratorForClass();
 
-  MessageResponse setContentVisibility();
+    MessageResponse setContentVisibility();
 
-  MessageResponse removeInviteForStudentFromClass();
+    MessageResponse removeInviteForStudentFromClass();
 
-  MessageResponse removeStudentFromClass();
+    MessageResponse removeStudentFromClass();
 }
