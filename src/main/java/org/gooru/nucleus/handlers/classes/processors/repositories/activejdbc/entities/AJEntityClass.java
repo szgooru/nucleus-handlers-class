@@ -1,14 +1,6 @@
 package org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.entities;
 
-import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
+import io.vertx.core.json.JsonObject;
 import org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.converters.ConverterRegistry;
 import org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.converters.FieldConverter;
 import org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.validators.FieldSelector;
@@ -17,7 +9,8 @@ import org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.val
 import org.javalite.activejdbc.Model;
 import org.javalite.activejdbc.annotations.Table;
 
-import io.vertx.core.json.JsonObject;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 
 /**
  * Created by ashish on 8/2/16.
@@ -71,7 +64,8 @@ public class AJEntityClass extends Model {
     public static final String FETCH_VIA_CODE_FILTER = "code = ? and is_deleted = false";
     public static final String COURSE_ASSOCIATION_FILTER = "id = ?::uuid and is_deleted = false and owner_id = ?::uuid";
     public static final String DELETE_QUERY =
-        "select id, creator_id, end_date, course_id, gooru_version, is_archived from class where id = ?::uuid and is_deleted = false";
+        "select id, creator_id, end_date, course_id, gooru_version, is_archived from class where id = ?::uuid and "
+            + "is_deleted = false";
     public static final String CODE_UNIQUENESS_QUERY = "code = ?";
 
     public static final Set<String> EDITABLE_FIELDS = new HashSet<>(Arrays.asList(TITLE, DESCRIPTION, GREETING, GRADE,
@@ -121,7 +115,7 @@ public class AJEntityClass extends Model {
         validatorMap.put(GREETING, (value) -> FieldValidator.validateStringIfPresent(value, 5000));
         validatorMap.put(GRADE, FieldValidator::validateJsonArrayIfPresent);
         validatorMap.put(CLASS_SHARING,
-            (value) -> (value != null && value instanceof String
+            (value) -> ((value != null) && (value instanceof String)
                 && (CLASS_SHARING_TYPE_OPEN.equalsIgnoreCase((String) value)
                     || CLASS_SHARING_TYPE_RESTRICTED.equalsIgnoreCase((String) value))));
         validatorMap.put(COVER_IMAGE, (value) -> FieldValidator.validateStringIfPresent(value, 2000));
@@ -254,11 +248,11 @@ public class AJEntityClass extends Model {
     }
 
     public boolean isCurrentVersion() {
-        return this.getInteger(GOORU_VERSION) == CURRENT_VERSION;
+        return getInteger(GOORU_VERSION) == CURRENT_VERSION;
     }
 
     public boolean isArchived() {
-        return this.getBoolean(IS_ARCHIVED);
+        return getBoolean(IS_ARCHIVED);
     }
 
     public void setVersion() {

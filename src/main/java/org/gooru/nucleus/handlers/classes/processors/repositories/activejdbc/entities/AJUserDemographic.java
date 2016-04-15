@@ -1,10 +1,10 @@
 package org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.entities;
 
-import java.util.Arrays;
-import java.util.List;
-
 import org.javalite.activejdbc.Model;
 import org.javalite.activejdbc.annotations.Table;
+
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Created by ashish on 4/3/16.
@@ -13,6 +13,10 @@ import org.javalite.activejdbc.annotations.Table;
 public class AJUserDemographic extends Model {
     public static final String GET_SUMMARY_QUERY =
         "select id, firstname, lastname, thumbnail_path from user_demographic where id = ANY(?::uuid[])";
+    public static final String FETCH_TEACHER_DETAILS_QUERY =
+        "select id, firstname, lastname, thumbnail_path from user_demographic where id = ANY(select creator_id from "
+            + "class where id = ANY(?::uuid[]))";
+
     public static final String ID = "id";
     public static final String FIRST_NAME = "firstname";
     public static final String LAST_NAME = "lastname";

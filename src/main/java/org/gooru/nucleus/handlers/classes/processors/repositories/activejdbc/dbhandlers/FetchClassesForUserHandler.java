@@ -1,16 +1,14 @@
 package org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.dbhandlers;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.ResourceBundle;
-
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 import org.gooru.nucleus.handlers.classes.constants.MessageConstants;
 import org.gooru.nucleus.handlers.classes.processors.ProcessorContext;
 import org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.Utils;
 import org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.dbauth.AuthorizerBuilder;
 import org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.entities.AJClassMember;
 import org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.entities.AJEntityClass;
+import org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.entities.AJUserDemographic;
 import org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.formatter.JsonFormatterBuilder;
 import org.gooru.nucleus.handlers.classes.processors.responses.ExecutionResult;
 import org.gooru.nucleus.handlers.classes.processors.responses.MessageResponse;
@@ -21,8 +19,10 @@ import org.javalite.activejdbc.LazyList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.ResourceBundle;
 
 /**
  * Created by ashish on 8/2/16.
@@ -32,11 +32,13 @@ class FetchClassesForUserHandler implements DBHandler {
     private static final ResourceBundle RESOURCE_BUNDLE = ResourceBundle.getBundle("messages");
     private final ProcessorContext context;
     private final List<String> classIdList = new ArrayList<>();
+    private JsonArray memberClassIdArray;
     private static final String RESPONSE_BUCKET_OWNER = "owner";
     private static final String RESPONSE_BUCKET_COLLABORATOR = "collaborator";
     private static final String RESPONSE_BUCKET_MEMBER = "member";
     private static final String RESPONSE_BUCKET_CLASSES = "classes";
     private static final String RESPONSE_BUCKET_MEMBER_COUNT = "member_count";
+    private static final String RESPONSE_BUCKET_TEACHER_DETAILS = "teacher_details";
 
     FetchClassesForUserHandler(ProcessorContext context) {
         this.context = context;
@@ -44,7 +46,7 @@ class FetchClassesForUserHandler implements DBHandler {
 
     @Override
     public ExecutionResult<MessageResponse> checkSanity() {
-        if (context.userId() == null || context.userId().isEmpty()
+        if ((context.userId() == null) || context.userId().isEmpty()
             || MessageConstants.MSG_USER_ANONYMOUS.equalsIgnoreCase(context.userId())) {
             LOGGER.warn("Invalid user");
             return new ExecutionResult<>(
@@ -75,7 +77,11 @@ class FetchClassesForUserHandler implements DBHandler {
         if (response.hasFailed()) {
             return response;
         }
-        return populateClassDetails(result);
+        response = populateClassDetails(result);
+        if (response.hasFailed()) {
+            return response;
+        }
+        return populateTeacherDetails(result);
     }
 
     @Override
@@ -114,7 +120,7 @@ class FetchClassesForUserHandler implements DBHandler {
         try {
             LazyList<AJClassMember> members =
                 AJClassMember.findBySQL(AJClassMember.FETCH_USER_MEMBERSHIP_QUERY, context.userId());
-            JsonArray memberClassIdArray = new JsonArray();
+            memberClassIdArray = new JsonArray();
             for (AJClassMember member : members) {
                 String classId = member.getString(AJClassMember.CLASS_ID);
                 memberClassIdArray.add(classId);
@@ -152,9 +158,26 @@ class FetchClassesForUserHandler implements DBHandler {
         JsonArray classDetails = new JsonArray(
             JsonFormatterBuilder.buildSimpleJsonFormatter(false, AJEntityClass.FETCH_QUERY_FIELD_LIST).toJson(classes));
         result.put(RESPONSE_BUCKET_CLASSES, classDetails);
-        return new ExecutionResult<>(MessageResponseFactory.createOkayResponse(result),
-            ExecutionResult.ExecutionStatus.SUCCESSFUL);
-
+        return new ExecutionResult<>(null, ExecutionResult.ExecutionStatus.CONTINUE_PROCESSING);
     }
 
+    private ExecutionResult<MessageResponse> populateTeacherDetails(JsonObject result) {
+        try {
+            LazyList<AJUserDemographic> demographics =
+                AJUserDemographic.findBySQL(AJUserDemographic.FETCH_TEACHER_DETAILS_QUERY,
+                    Utils.convertListToPostgresArrayStringRepresentation(memberClassIdArray.getList()));
+            // update that in the response
+            JsonArray teacherDetails = new JsonArray(JsonFormatterBuilder
+                .buildSimpleJsonFormatter(false, AJUserDemographic.GET_SUMMARY_QUERY_FIELD_LIST).toJson(demographics));
+            result.put(RESPONSE_BUCKET_TEACHER_DETAILS, teacherDetails);
+            return new ExecutionResult<>(MessageResponseFactory.createOkayResponse(result),
+                ExecutionResult.ExecutionStatus.SUCCESSFUL);
+
+        } catch (DBException dbe) {
+            LOGGER.warn("Unable to fetch teacher details for classes for user '{}'", context.userId(), dbe);
+            return new ExecutionResult<>(
+                MessageResponseFactory.createInternalErrorResponse(RESOURCE_BUNDLE.getString("error.from.store")),
+                ExecutionResult.ExecutionStatus.FAILED);
+        }
+    }
 }
