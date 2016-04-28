@@ -43,9 +43,13 @@ public final class AuthorizerBuilder {
 
     public static Authorizer<AJEntityClass> buildFetchClassMembersAuthorizer(ProcessorContext context) {
         // User should be a member (which is either teacher or collaborator or
-        // student of that class. The student may have
-        // just been invited or (s)he may have joined, we don't care as long as
-        // (s)he is there
+        // student of that class.
+        return new ClassMemberAuthorizer(context);
+    }
+
+    public static Authorizer<AJEntityClass> buildClassMembersAuthorizer(ProcessorContext context) {
+        // User should be a member (which is either teacher or collaborator or
+        // student of that class.
         return new ClassMemberAuthorizer(context);
     }
 

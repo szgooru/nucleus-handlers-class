@@ -46,6 +46,7 @@ public class AJClassMember extends Model {
     public static final String FETCH_MEMBERSHIP_COUNT_FOR_CLASSES =
         "select class_id, count(class_id) from class_member where class_member_status = 'joined'::class_member_status_type and class_id = ANY"
             + "(?::uuid[]) group by class_id";
+    public static final String STUDENT_COUNT_FROM_SET_FILTER = "class_id = ?::uuid and user_id = ANY(?::uuid[])";
     public static final String FETCH_MEMBERSHIP_COUNT_FOR_CLASS_QUERY =
         "class_member_status = 'joined'::class_member_status_type and class_id = ?::uuid";
     public static final String DELETE_INVITE_QUERY_FILTER =

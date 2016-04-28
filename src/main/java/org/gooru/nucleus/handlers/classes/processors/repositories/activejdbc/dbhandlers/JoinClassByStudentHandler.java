@@ -96,6 +96,12 @@ class JoinClassByStudentHandler implements DBHandler {
                     .createInvalidRequestResponse(RESOURCE_BUNDLE.getString("class.archived.or.incorrect.version")),
                 ExecutionResult.ExecutionStatus.FAILED);
         }
+        // First level of authorization, user should not be teacher, co teacher or student already
+        if (isUserClassMember()) {
+            return new ExecutionResult<>(
+                MessageResponseFactory.createForbiddenResponse(RESOURCE_BUNDLE.getString("existing.member")),
+                ExecutionResult.ExecutionStatus.FAILED);
+        }
         // Now get the membership record for that user
         LazyList<AJClassMember> members =
             AJClassMember.where(AJClassMember.FETCH_FOR_EMAIL_QUERY_FILTER, this.classId, this.email);
@@ -167,5 +173,11 @@ class JoinClassByStudentHandler implements DBHandler {
         map.forEach(errors::put);
         return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(errors),
             ExecutionResult.ExecutionStatus.FAILED);
+    }
+
+    private boolean isUserClassMember() {
+        ExecutionResult<MessageResponse> result =
+            AuthorizerBuilder.buildClassMembersAuthorizer(context).authorize(this.entityClass);
+        return result.continueProcessing();
     }
 }

@@ -1,12 +1,16 @@
 package org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.dbhandlers;
 
+import java.util.List;
 import java.util.Map;
 import java.util.ResourceBundle;
+import java.util.stream.Collectors;
 
 import org.gooru.nucleus.handlers.classes.constants.MessageConstants;
 import org.gooru.nucleus.handlers.classes.processors.ProcessorContext;
 import org.gooru.nucleus.handlers.classes.processors.events.EventBuilderFactory;
+import org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.Utils;
 import org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.dbauth.AuthorizerBuilder;
+import org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.entities.AJClassMember;
 import org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.entities.AJEntityClass;
 import org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.entitybuilders.EntityBuilder;
 import org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.validators.PayloadValidator;
@@ -89,7 +93,12 @@ class UpdateCollaboratorForClassHandler implements DBHandler {
                     .createInvalidRequestResponse(RESOURCE_BUNDLE.getString("class.archived.or.incorrect.version")),
                 ExecutionResult.ExecutionStatus.FAILED);
         }
-
+        // Validate if incoming list of collaborators is not the creator or student of class
+        if (collaboratorsAreTeachersOrStudents()) {
+            return new ExecutionResult<>(
+                MessageResponseFactory.createForbiddenResponse(RESOURCE_BUNDLE.getString("existing.member")),
+                ExecutionResult.ExecutionStatus.FAILED);
+        }
         return AuthorizerBuilder.buildUpdateCollaboratorAuthorizer(this.context).authorize(this.entityClass);
     }
 
@@ -161,6 +170,20 @@ class UpdateCollaboratorForClassHandler implements DBHandler {
             result.put(COLLABORATORS_REMOVED, new JsonArray());
         }
         return result;
+    }
+
+    private boolean collaboratorsAreTeachersOrStudents() {
+        String creatorId = this.entityClass.getString(AJEntityClass.CREATOR_ID);
+        JsonArray newCollaborators = this.context.request().getJsonArray(AJEntityClass.COLLABORATOR);
+        if (newCollaborators.contains(creatorId)) {
+            return true;
+        }
+        List<?> rawCollaborator = newCollaborators.getList();
+        List<String> collaborators =
+            rawCollaborator.stream().map(Object::toString).collect(Collectors.toList());
+        Long countOfStudents = AJClassMember.count(AJClassMember.STUDENT_COUNT_FROM_SET_FILTER, context.classId(),
+            Utils.convertListToPostgresArrayStringRepresentation(collaborators));
+        return (countOfStudents != null && countOfStudents != 0);
     }
 
     private static class DefaultPayloadValidator implements PayloadValidator {
