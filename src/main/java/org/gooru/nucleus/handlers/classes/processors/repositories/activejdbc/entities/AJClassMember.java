@@ -35,16 +35,19 @@ public class AJClassMember extends Model {
     public static final String TABLE_CLASS_MEMBER = "class_member";
 
     public static final String INVITE_STUDENT_QUERY =
-        "insert into class_member (class_id, email, class_member_status, creator_system) values (?::uuid, ?, ?::class_member_status_type, ?)";
+        "insert into class_member (class_id, email, class_member_status, creator_system) "
+            + "values (?::uuid, ?, ?::class_member_status_type, ?)";
 
     public static final String FETCH_FOR_USER_QUERY_FILTER = "class_id = ?::uuid and user_id = ?::uuid";
     public static final String FETCH_FOR_EMAIL_QUERY_FILTER = "class_id = ?::uuid and email = ?";
     public static final String FETCH_ALL_QUERY_FILTER = "class_id = ?::uuid";
     public static final String DELETE_MEMBERSHIP_FOR_CLASS_QUERY = "delete from class_member where class_id = ?::uuid";
     public static final String FETCH_USER_MEMBERSHIP_QUERY =
-        "select class_id from class_member where user_id = ?::uuid and class_member_status = 'joined'::class_member_status_type";
+        "select class_id from class_member where user_id = ?::uuid and class_member_status = "
+            + "'joined'::class_member_status_type order by created_at desc";
     public static final String FETCH_MEMBERSHIP_COUNT_FOR_CLASSES =
-        "select class_id, count(class_id) from class_member where class_member_status = 'joined'::class_member_status_type and class_id = ANY"
+        "select class_id, count(class_id) from class_member where "
+            + "class_member_status = 'joined'::class_member_status_type and class_id = ANY"
             + "(?::uuid[]) group by class_id";
     public static final String STUDENT_COUNT_FROM_SET_FILTER = "class_id = ?::uuid and user_id = ANY(?::uuid[])";
     public static final String FETCH_MEMBERSHIP_COUNT_FOR_CLASS_QUERY =

@@ -59,7 +59,8 @@ public class AJEntityClass extends Model {
     public static final String FETCH_QUERY_FILTER = "id = ?::uuid and is_deleted = false";
     public static final String FETCH_MULTIPLE_QUERY_FILTER = "id = ANY(?::uuid[]) and is_deleted = false";
     public static final String FETCH_FOR_OWNER_COLLABORATOR_QUERY =
-        "select id, creator_id from class where (creator_id = ?::uuid or collaborator ?? ? ) and is_deleted = false";
+        "select id, creator_id from class where (creator_id = ?::uuid or collaborator ?? ? ) and is_deleted = false "
+            + "order by created_at desc";
     public static final String FETCH_FOR_COURSE_QUERY_FILTER = "course_id = ?::uuid and is_deleted = false";
     public static final String FETCH_VIA_CODE_FILTER = "code = ? and is_deleted = false";
     public static final String COURSE_ASSOCIATION_FILTER = "id = ?::uuid and is_deleted = false and owner_id = ?::uuid";
