@@ -111,7 +111,7 @@ public class AJEntityClass extends Model {
     private static Map<String, FieldValidator> initializeValidators() {
         Map<String, FieldValidator> validatorMap = new HashMap<>();
         validatorMap.put(ID, (FieldValidator::validateUuid));
-        validatorMap.put(TITLE, (value) -> FieldValidator.validateString(value, 5000));
+        validatorMap.put(TITLE, (value) -> FieldValidator.validateString(value, 1000));
         validatorMap.put(DESCRIPTION, (value) -> FieldValidator.validateStringIfPresent(value, 5000));
         validatorMap.put(GREETING, (value) -> FieldValidator.validateStringIfPresent(value, 5000));
         validatorMap.put(GRADE, FieldValidator::validateJsonArrayIfPresent);
