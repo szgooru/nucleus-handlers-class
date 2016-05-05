@@ -1,6 +1,8 @@
 package org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.entities;
 
-import io.vertx.core.json.JsonObject;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+
 import org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.converters.ConverterRegistry;
 import org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.converters.FieldConverter;
 import org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.validators.FieldSelector;
@@ -9,8 +11,7 @@ import org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.val
 import org.javalite.activejdbc.Model;
 import org.javalite.activejdbc.annotations.Table;
 
-import java.time.format.DateTimeFormatter;
-import java.util.*;
+import io.vertx.core.json.JsonObject;
 
 /**
  * Created by ashish on 8/2/16.
@@ -69,18 +70,19 @@ public class AJEntityClass extends Model {
             + "is_deleted = false";
     public static final String CODE_UNIQUENESS_QUERY = "code = ?";
 
-    public static final Set<String> EDITABLE_FIELDS = new HashSet<>(Arrays.asList(TITLE, DESCRIPTION, GREETING, GRADE,
-        CLASS_SHARING, COVER_IMAGE, MIN_SCORE, END_DATE, COLLABORATOR));
-    public static final Set<String> CREATABLE_FIELDS = new HashSet<>(Arrays.asList(TITLE, DESCRIPTION, GREETING, GRADE,
-        CLASS_SHARING, COVER_IMAGE, MIN_SCORE, END_DATE, COLLABORATOR, CREATOR_SYSTEM, ROSTER_ID));
+    public static final Set<String> EDITABLE_FIELDS = new HashSet<>(Arrays
+        .asList(TITLE, DESCRIPTION, GREETING, GRADE, CLASS_SHARING, COVER_IMAGE, MIN_SCORE, END_DATE, COLLABORATOR));
+    public static final Set<String> CREATABLE_FIELDS = new HashSet<>(Arrays
+        .asList(TITLE, DESCRIPTION, GREETING, GRADE, CLASS_SHARING, COVER_IMAGE, MIN_SCORE, END_DATE, COLLABORATOR,
+            CREATOR_SYSTEM, ROSTER_ID));
     public static final Set<String> MANDATORY_FIELDS = new HashSet<>(Arrays.asList(TITLE, CLASS_SHARING));
     public static final Set<String> FORBIDDEN_FIELDS = new HashSet<>(
         Arrays.asList(ID, CREATED_AT, UPDATED_AT, CREATOR_ID, MODIFIER_ID, IS_DELETED, GOORU_VERSION, IS_ARCHIVED));
     public static final Set<String> COLLABORATOR_FIELDS = new HashSet<>(Arrays.asList(COLLABORATOR));
     public static final Set<String> INVITE_MANDATORY_FIELDS = new HashSet<>(Arrays.asList(INVITEES));
     public static final Set<String> INVITE_ALLOWED_FIELDS = new HashSet<>(Arrays.asList(INVITEES, CREATOR_SYSTEM));
-    public static final List<String> FETCH_QUERY_FIELD_LIST =
-        Arrays.asList(ID, CREATOR_ID, TITLE, DESCRIPTION, GREETING, GRADE, CLASS_SHARING, COVER_IMAGE, CODE, MIN_SCORE,
+    public static final List<String> FETCH_QUERY_FIELD_LIST = Arrays
+        .asList(ID, CREATOR_ID, TITLE, DESCRIPTION, GREETING, GRADE, CLASS_SHARING, COVER_IMAGE, CODE, MIN_SCORE,
             END_DATE, COURSE_ID, COLLABORATOR, GOORU_VERSION, CONTENT_VISIBILITY, IS_ARCHIVED, CREATED_AT, UPDATED_AT);
     public static final Set<String> JOIN_CLASS_FIELDS = new HashSet<>(Arrays.asList(ROSTER_ID, CREATOR_SYSTEM));
 
@@ -115,10 +117,9 @@ public class AJEntityClass extends Model {
         validatorMap.put(DESCRIPTION, (value) -> FieldValidator.validateStringIfPresent(value, 5000));
         validatorMap.put(GREETING, (value) -> FieldValidator.validateStringIfPresent(value, 5000));
         validatorMap.put(GRADE, FieldValidator::validateJsonArrayIfPresent);
-        validatorMap.put(CLASS_SHARING,
-            (value) -> ((value != null) && (value instanceof String)
-                && (CLASS_SHARING_TYPE_OPEN.equalsIgnoreCase((String) value)
-                    || CLASS_SHARING_TYPE_RESTRICTED.equalsIgnoreCase((String) value))));
+        validatorMap.put(CLASS_SHARING, (value) -> ((value != null) && (value instanceof String) && (
+            CLASS_SHARING_TYPE_OPEN.equalsIgnoreCase((String) value) || CLASS_SHARING_TYPE_RESTRICTED
+                .equalsIgnoreCase((String) value))));
         validatorMap.put(COVER_IMAGE, (value) -> FieldValidator.validateStringIfPresent(value, 2000));
         validatorMap.put(MIN_SCORE, (FieldValidator::validateInteger));
         validatorMap.put(END_DATE,
@@ -130,14 +131,14 @@ public class AJEntityClass extends Model {
         validatorMap.put(ROSTER_ID, (value) -> FieldValidator.validateStringIfPresent(value, 512));
         validatorMap.put(INVITEES,
             (value) -> FieldValidator.validateDeepJsonArrayIfPresent(value, FieldValidator::validateEmail));
-        validatorMap.put(CV_ASSESSMENTS,
-            (value) -> FieldValidator.validateDeepJsonArray(value, FieldValidator::validateUuid));
-        validatorMap.put(CV_COLLECTIONS,
-            (value) -> FieldValidator.validateDeepJsonArray(value, FieldValidator::validateUuid));
-        validatorMap.put(CV_LESSONS,
-            (value) -> FieldValidator.validateDeepJsonArray(value, FieldValidator::validateUuid));
-        validatorMap.put(CV_UNITS,
-            (value) -> FieldValidator.validateDeepJsonArray(value, FieldValidator::validateUuid));
+        validatorMap
+            .put(CV_ASSESSMENTS, (value) -> FieldValidator.validateDeepJsonArray(value, FieldValidator::validateUuid));
+        validatorMap
+            .put(CV_COLLECTIONS, (value) -> FieldValidator.validateDeepJsonArray(value, FieldValidator::validateUuid));
+        validatorMap
+            .put(CV_LESSONS, (value) -> FieldValidator.validateDeepJsonArray(value, FieldValidator::validateUuid));
+        validatorMap
+            .put(CV_UNITS, (value) -> FieldValidator.validateDeepJsonArray(value, FieldValidator::validateUuid));
         return Collections.unmodifiableMap(validatorMap);
     }
 
@@ -258,6 +259,27 @@ public class AJEntityClass extends Model {
 
     public void setVersion() {
         this.set(GOORU_VERSION, CURRENT_VERSION);
+    }
+
+    public void adjustEndDate(String defaultEndDate) {
+        java.sql.Date payloadDate = this.getDate(END_DATE);
+        if (payloadDate == null) {
+            setEndDate(defaultEndDate);
+            return;
+        }
+        java.sql.Date defaultDate = java.sql.Date.valueOf(defaultEndDate);
+        if (payloadDate.before(defaultDate)) {
+            // payload date is acceptable
+            return;
+        }
+        setEndDate(defaultEndDate);
+    }
+
+    private void setEndDate(String classEndDate) {
+        FieldConverter fc = converterRegistry.get(END_DATE);
+        if (fc != null) {
+            this.set(END_DATE, fc.convertField(classEndDate));
+        }
     }
 
     private static class ClassValidationRegistry implements ValidatorRegistry {

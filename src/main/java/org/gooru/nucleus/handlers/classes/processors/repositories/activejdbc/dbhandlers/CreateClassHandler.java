@@ -3,6 +3,7 @@ package org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.db
 import java.util.Map;
 import java.util.ResourceBundle;
 
+import org.gooru.nucleus.handlers.classes.app.components.AppConfiguration;
 import org.gooru.nucleus.handlers.classes.constants.MessageConstants;
 import org.gooru.nucleus.handlers.classes.processors.ProcessorContext;
 import org.gooru.nucleus.handlers.classes.processors.events.EventBuilderFactory;
@@ -38,8 +39,8 @@ class CreateClassHandler implements DBHandler {
     @Override
     public ExecutionResult<MessageResponse> checkSanity() {
         // The user should not be anonymous
-        if (context.userId() == null || context.userId().isEmpty()
-            || context.userId().equalsIgnoreCase(MessageConstants.MSG_USER_ANONYMOUS)) {
+        if (context.userId() == null || context.userId().isEmpty() || context.userId()
+            .equalsIgnoreCase(MessageConstants.MSG_USER_ANONYMOUS)) {
             LOGGER.warn("Anonymous or invalid user attempting to create class");
             return new ExecutionResult<>(
                 MessageResponseFactory.createForbiddenResponse(RESOURCE_BUNDLE.getString("not.allowed")),
@@ -53,8 +54,9 @@ class CreateClassHandler implements DBHandler {
                 ExecutionResult.ExecutionStatus.FAILED);
         }
         // Our validators should certify this
-        JsonObject errors = new DefaultPayloadValidator().validatePayload(context.request(),
-            AJEntityClass.createFieldSelector(), AJEntityClass.getValidatorRegistry());
+        JsonObject errors = new DefaultPayloadValidator()
+            .validatePayload(context.request(), AJEntityClass.createFieldSelector(),
+                AJEntityClass.getValidatorRegistry());
         if (errors != null && !errors.isEmpty()) {
             LOGGER.warn("Validation errors for request");
             return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(errors),
@@ -73,9 +75,8 @@ class CreateClassHandler implements DBHandler {
     public ExecutionResult<MessageResponse> executeRequest() {
         this.entityClass = new AJEntityClass();
         if (!populateClassCode()) {
-            return new ExecutionResult<>(
-                MessageResponseFactory
-                    .createInternalErrorResponse(RESOURCE_BUNDLE.getString("class.code.generation.failure")),
+            return new ExecutionResult<>(MessageResponseFactory
+                .createInternalErrorResponse(RESOURCE_BUNDLE.getString("class.code.generation.failure")),
                 ExecutionResult.ExecutionStatus.FAILED);
         }
         autoPopulate();
@@ -91,9 +92,8 @@ class CreateClassHandler implements DBHandler {
                     ExecutionResult.ExecutionStatus.FAILED);
             }
         }
-        return new ExecutionResult<>(
-            MessageResponseFactory.createCreatedResponse(this.entityClass.getId().toString(),
-                EventBuilderFactory.getCreateClassEventBuilder(this.entityClass.getString(AJEntityClass.ID))),
+        return new ExecutionResult<>(MessageResponseFactory.createCreatedResponse(this.entityClass.getId().toString(),
+            EventBuilderFactory.getCreateClassEventBuilder(this.entityClass.getString(AJEntityClass.ID))),
             ExecutionResult.ExecutionStatus.SUCCESSFUL);
     }
 
@@ -109,8 +109,10 @@ class CreateClassHandler implements DBHandler {
         this.entityClass.setCreatorId(this.context.userId());
         this.entityClass.setVersion();
         // Now we hydrate model from payload
-        new DefaultAJEntityClassBuilder().build(this.entityClass, this.context.request(),
-            AJEntityClass.getConverterRegistry());
+        new DefaultAJEntityClassBuilder()
+            .build(this.entityClass, this.context.request(), AJEntityClass.getConverterRegistry());
+        // Populate default values in case not hydrated properly
+        this.entityClass.adjustEndDate(AppConfiguration.getInstance().getClassEndDate());
     }
 
     private boolean populateClassCode() {
