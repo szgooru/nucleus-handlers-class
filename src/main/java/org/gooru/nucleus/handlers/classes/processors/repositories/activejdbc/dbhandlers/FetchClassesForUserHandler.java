@@ -118,11 +118,10 @@ class FetchClassesForUserHandler implements DBHandler {
 
     private ExecutionResult<MessageResponse> populateMembershipClassesId(JsonObject result) {
         try {
-            LazyList<AJClassMember> members =
-                AJClassMember.findBySQL(AJClassMember.FETCH_USER_MEMBERSHIP_QUERY, context.userId());
             memberClassIdArray = new JsonArray();
-            for (AJClassMember member : members) {
-                String classId = member.getString(AJClassMember.CLASS_ID);
+            List memberClassIdList = Base.firstColumn(AJClassMember.FETCH_USER_MEMBERSHIP_QUERY, context.userId());
+            for (Object member : memberClassIdList) {
+                String classId = member.toString();
                 memberClassIdArray.add(classId);
                 classIdList.add(classId);
             }

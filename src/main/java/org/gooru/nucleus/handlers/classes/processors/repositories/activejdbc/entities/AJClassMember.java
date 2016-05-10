@@ -43,8 +43,9 @@ public class AJClassMember extends Model {
     public static final String FETCH_ALL_QUERY_FILTER = "class_id = ?::uuid";
     public static final String DELETE_MEMBERSHIP_FOR_CLASS_QUERY = "delete from class_member where class_id = ?::uuid";
     public static final String FETCH_USER_MEMBERSHIP_QUERY =
-        "select class_id from class_member where user_id = ?::uuid and class_member_status = "
-            + "'joined'::class_member_status_type order by created_at desc";
+        "select class_id from class_member cm, class c where cm.user_id = ?::uuid and cm.class_member_status = "
+            + "'joined'::class_member_status_type and cm.class_id = c.id and c.is_deleted = false order by "
+            + "cm.created_at desc";
     public static final String FETCH_MEMBERSHIP_COUNT_FOR_CLASSES =
         "select class_id, count(class_id) from class_member where "
             + "class_member_status = 'joined'::class_member_status_type and class_id = ANY"
