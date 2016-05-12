@@ -44,7 +44,7 @@ public class ContentVisibilityHandler implements DBHandler {
         // The user should not be anonymous
         if (context.userId() == null || context.userId().isEmpty()
             || context.userId().equalsIgnoreCase(MessageConstants.MSG_USER_ANONYMOUS)) {
-            LOGGER.warn("Anonymous user attempting to invite student to class");
+            LOGGER.warn("Anonymous user attempting to mark content visible in class");
             return new ExecutionResult<>(
                 MessageResponseFactory.createForbiddenResponse(RESOURCE_BUNDLE.getString("not.allowed")),
                 ExecutionResult.ExecutionStatus.FAILED);

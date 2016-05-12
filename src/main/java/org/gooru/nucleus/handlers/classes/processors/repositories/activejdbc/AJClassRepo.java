@@ -85,4 +85,14 @@ class AJClassRepo implements ClassRepo {
     public MessageResponse removeStudentFromClass() {
         return TransactionExecutor.executeTransaction(DBHandlerBuilder.buildRemoveStudentHandler(context));
     }
+
+    @Override
+    public MessageResponse getVisibleContentStats() {
+        return TransactionExecutor.executeTransaction(DBHandlerBuilder.buildGetVisibleContentStatsHandler(context));
+    }
+
+    @Override
+    public MessageResponse getVisibleContent() {
+        return TransactionExecutor.executeTransaction(DBHandlerBuilder.buildGetVisibleContentHandler(context));
+    }
 }

@@ -34,4 +34,8 @@ public interface ClassRepo {
     MessageResponse removeInviteForStudentFromClass();
 
     MessageResponse removeStudentFromClass();
+
+    MessageResponse getVisibleContentStats();
+
+    MessageResponse getVisibleContent();
 }
