@@ -8,6 +8,18 @@ import org.javalite.activejdbc.annotations.Table;
  */
 @Table("collection")
 public class AJEntityCollection extends Model {
+    
+    public static final String ID = "id";
+    public static final String COURSE_ID = "course_id";
+    public static final String UNIT_ID = "unit_id";
+    public static final String LESSON_ID = "lesson_id";
+    public static final String CA_COUNT = "ca_count";
+    public static final String ASSESSMENT_COUNT = "assessment_count";
+    public static final String COLLECTION_COUNT = "collection_count";
+    public static final String COURSE = "course";
+    public static final String UNITS = "units";
+    public static final String LESSONS = "lessons";
+    
     // Instead of stating equals assessment we are saying not equals collection because we need to include both
     // assessment and external assessment here
     public static final String FETCH_VISIBLE_ASSESSMENTS_QUERY =
@@ -25,10 +37,10 @@ public class AJEntityCollection extends Model {
         "course_id = ?::uuid and id = ANY(?::uuid[]) and is_deleted = false and not class_visibility ?? ?";
     public static final String TABLE_COLLECTION = "collection";
 
-    private static final String FORMAT_TYPE = "format";
-    private static final String FORMAT_TYPE_COLLECTION = "collection";
-    private static final String FORMAT_TYPE_ASSESSMENT = "assessment";
-    private static final String FORMAT_TYPE_ASSESSMENT_EXT = "assessment-external";
+    public static final String FORMAT_TYPE = "format";
+    public static final String FORMAT_TYPE_COLLECTION = "collection";
+    public static final String FORMAT_TYPE_ASSESSMENT = "assessment";
+    public static final String FORMAT_TYPE_ASSESSMENT_EXT = "assessment-external";
     public static final String VISIBILITY_DML = "class_visibility = class_visibility || ?";
     public static final String VISIBILITY_DML_FILTER =
         "course_id = ?::uuid and is_deleted = false and id = ANY(?::uuid[])";
