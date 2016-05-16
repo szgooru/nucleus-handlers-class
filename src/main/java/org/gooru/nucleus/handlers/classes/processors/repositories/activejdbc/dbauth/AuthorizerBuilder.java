@@ -80,12 +80,21 @@ public final class AuthorizerBuilder {
 
     public static Authorizer<AJEntityClass> buildCreateClassAuthorizer(ProcessorContext context) {
         // As long as session token is valid and user is not anonymous, which is
-        // the
-        // case as we are, we should be fine
+        // the case as we are, we should be fine
         return model -> new ExecutionResult<>(null, ExecutionResult.ExecutionStatus.CONTINUE_PROCESSING);
     }
 
     public static Authorizer<AJEntityClass> buildContentVisibilityAuthorizer(ProcessorContext context) {
         return new ClassOwnerOrCollaboratorAuthorizer(context);
+    }
+
+    public static Authorizer<AJEntityClass> buildVisibleContentAuthorizer(ProcessorContext context) {
+        return new ClassMemberAuthorizer(context);
+    }
+
+    public static Authorizer<AJEntityClass> buildVisibleContentStatsAuthorizer(ProcessorContext context) {
+        // FIXME: No idea as to how to authorize as this API is expensive and may be potentially heavy on DB
+        // and currently it is just pass through
+        return model -> new ExecutionResult<>(null, ExecutionResult.ExecutionStatus.CONTINUE_PROCESSING);
     }
 }

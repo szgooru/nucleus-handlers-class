@@ -46,6 +46,7 @@ public class AJEntityClass extends Model {
     public static final String INVITEES = "invitees";
 
     // Dummy field names for Content Visibility
+    // TODO this needs to change when going through the setting of content visibility in new model
     public static final String CV_UNITS = "units";
     public static final String CV_LESSONS = "lessons";
     public static final String CV_COLLECTIONS = "collections";
@@ -53,6 +54,10 @@ public class AJEntityClass extends Model {
     public static final Set<String> CV_FIELDS =
         new HashSet<>(Arrays.asList(CV_ASSESSMENTS, CV_COLLECTIONS, CV_LESSONS, CV_UNITS));
 
+    public static final String CONTENT_VISIBILITY_TYPE_NAME = "content_visibility_type";
+    public static final String CONTENT_VISIBILITY_TYPE_VISIBLE_NONE = "visible_none";
+    public static final String CONTENT_VISIBILITY_TYPE_VISIBLE_COLLECTION = "visible_collections";
+    public static final String CONTENT_VISIBILITY_TYPE_VISIBLE_ALL = "visible_all";
     public static final String CLASS_SHARING_TYPE_NAME = "class_sharing_type";
     public static final String CLASS_SHARING_TYPE_OPEN = "open";
     public static final String CLASS_SHARING_TYPE_RESTRICTED = "restricted";
@@ -74,7 +79,7 @@ public class AJEntityClass extends Model {
         .asList(TITLE, DESCRIPTION, GREETING, GRADE, CLASS_SHARING, COVER_IMAGE, MIN_SCORE, END_DATE, COLLABORATOR));
     public static final Set<String> CREATABLE_FIELDS = new HashSet<>(Arrays
         .asList(TITLE, DESCRIPTION, GREETING, GRADE, CLASS_SHARING, COVER_IMAGE, MIN_SCORE, END_DATE, COLLABORATOR,
-            CREATOR_SYSTEM, ROSTER_ID));
+            CONTENT_VISIBILITY, CREATOR_SYSTEM, ROSTER_ID));
     public static final Set<String> MANDATORY_FIELDS = new HashSet<>(Arrays.asList(TITLE, CLASS_SHARING));
     public static final Set<String> FORBIDDEN_FIELDS = new HashSet<>(
         Arrays.asList(ID, CREATED_AT, UPDATED_AT, CREATOR_ID, MODIFIER_ID, IS_DELETED, GOORU_VERSION, IS_ARCHIVED));
@@ -100,7 +105,8 @@ public class AJEntityClass extends Model {
         converterMap.put(GRADE, (FieldConverter::convertFieldToJson));
         converterMap.put(END_DATE,
             (fieldValue -> FieldConverter.convertFieldToDateWithFormat(fieldValue, DateTimeFormatter.ISO_LOCAL_DATE)));
-        converterMap.put(CONTENT_VISIBILITY, (FieldConverter::convertFieldToJson));
+        converterMap.put(CONTENT_VISIBILITY,
+            fieldValue -> FieldConverter.convertFieldToNamedType(fieldValue, CONTENT_VISIBILITY_TYPE_NAME));
         converterMap.put(CREATOR_ID, (fieldValue -> FieldConverter.convertFieldToUuid((String) fieldValue)));
         converterMap.put(MODIFIER_ID, (fieldValue -> FieldConverter.convertFieldToUuid((String) fieldValue)));
         converterMap.put(COURSE_ID, (fieldValue -> FieldConverter.convertFieldToUuid((String) fieldValue)));
@@ -135,10 +141,6 @@ public class AJEntityClass extends Model {
             .put(CV_ASSESSMENTS, (value) -> FieldValidator.validateDeepJsonArray(value, FieldValidator::validateUuid));
         validatorMap
             .put(CV_COLLECTIONS, (value) -> FieldValidator.validateDeepJsonArray(value, FieldValidator::validateUuid));
-        validatorMap
-            .put(CV_LESSONS, (value) -> FieldValidator.validateDeepJsonArray(value, FieldValidator::validateUuid));
-        validatorMap
-            .put(CV_UNITS, (value) -> FieldValidator.validateDeepJsonArray(value, FieldValidator::validateUuid));
         return Collections.unmodifiableMap(validatorMap);
     }
 
