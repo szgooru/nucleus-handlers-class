@@ -11,15 +11,16 @@ public class AJEntityCollection extends Model {
     // Instead of stating equals assessment we are saying not equals collection because we need to include both
     // assessment and external assessment here
     public static final String FETCH_VISIBLE_ASSESSMENTS_QUERY =
-        "select id from collection where course_id = ? and format != 'collection'::content_container_type and "
+        "select id from collection where course_id = ?::uuid and format != 'collection'::content_container_type and "
             + "is_deleted = false and class_visibility ?? ?";
     // Select both id and type and then in CPU separate them in buckets instead of going to db multiple times
     public static final String FETCH_VISIBLE_ITEMS_QUERY =
-        "select id, format from collection where course_id = ? and" + " is_deleted = false and class_visibility ?? ?";
+        "select id, format from collection where course_id = ?::uuid and"
+            + " is_deleted = false and class_visibility ?? ?";
 
     public static final String FETCH_STATISTICS_QUERY =
-        "select course_id, unit_id, lesson_id, format, count(id) from collection where course_id = ? and is_deleted ="
-            + " false and class_visibility ?? ? group by course_id, unit_id, lesson_id, format";
+        "select course_id, unit_id, lesson_id, format, count(id) from collection where course_id = ?::uuid and "
+            + "is_deleted = false and class_visibility ?? ? group by course_id, unit_id, lesson_id, format";
     public static final String COLLECTIONS_QUERY_FILTER =
         "course_id = ?::uuid and id = ANY(?::uuid[]) and is_deleted = false and not class_visibility ?? ?";
     public static final String TABLE_COLLECTION = "collection";
@@ -28,6 +29,9 @@ public class AJEntityCollection extends Model {
     private static final String FORMAT_TYPE_COLLECTION = "collection";
     private static final String FORMAT_TYPE_ASSESSMENT = "assessment";
     private static final String FORMAT_TYPE_ASSESSMENT_EXT = "assessment-external";
+    public static final String VISIBILITY_DML = "class_visibility = class_visibility || ?";
+    public static final String VISIBILITY_DML_FILTER =
+        "course_id = ?::uuid and is_deleted = false and id = ANY(?::uuid[])";
 
     // The model needs to be hydrated with format, else it may fail
     public boolean isAssessment() {

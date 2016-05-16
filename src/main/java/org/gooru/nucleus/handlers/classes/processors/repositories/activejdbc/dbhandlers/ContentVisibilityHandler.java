@@ -5,17 +5,21 @@ import java.util.ResourceBundle;
 import org.gooru.nucleus.handlers.classes.constants.MessageConstants;
 import org.gooru.nucleus.handlers.classes.processors.ProcessorContext;
 import org.gooru.nucleus.handlers.classes.processors.events.EventBuilderFactory;
+import org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.Utils;
 import org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.dbauth.AuthorizerBuilder;
 import org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.dbhelpers.ContentVisibilityHelper;
 import org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.entities.AJEntityClass;
+import org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.entities.AJEntityCollection;
 import org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.validators.PayloadValidator;
 import org.gooru.nucleus.handlers.classes.processors.responses.ExecutionResult;
 import org.gooru.nucleus.handlers.classes.processors.responses.MessageResponse;
 import org.gooru.nucleus.handlers.classes.processors.responses.MessageResponseFactory;
+import org.javalite.activejdbc.DBException;
 import org.javalite.activejdbc.LazyList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 /**
@@ -26,6 +30,7 @@ public class ContentVisibilityHandler implements DBHandler {
     private static final ResourceBundle RESOURCE_BUNDLE = ResourceBundle.getBundle("messages");
     private final ProcessorContext context;
     private AJEntityClass entityClass;
+    private String courseId;
 
     ContentVisibilityHandler(ProcessorContext context) {
         this.context = context;
@@ -96,7 +101,7 @@ public class ContentVisibilityHandler implements DBHandler {
             return result;
         }
         // Class should be associated with course
-        String courseId = this.entityClass.getString(AJEntityClass.COURSE_ID);
+        courseId = this.entityClass.getString(AJEntityClass.COURSE_ID);
         if (courseId == null) {
             LOGGER
                 .error("Class '{}' is not assigned to course, hence cannot set content visibility", context.classId());
@@ -110,17 +115,44 @@ public class ContentVisibilityHandler implements DBHandler {
 
     @Override
     public ExecutionResult<MessageResponse> executeRequest() {
-        // TODO: Provide implementation
-        return new ExecutionResult<>(MessageResponseFactory
-            .createNoContentResponse(RESOURCE_BUNDLE.getString("updated"),
-                EventBuilderFactory.getContentVisibleEventBuilder(context.classId(), context.request())),
-            ExecutionResult.ExecutionStatus.SUCCESSFUL);
+        JsonArray input = getInputToMarkVisible();
+        // Note that here we are making collection table updates, this does not qualify as collection update
+        // So we should not mark modifier id or modified date as the user may not even have access to these collections
+        // From their perspective they are doing class operations
+
+        try {
+            int count = AJEntityCollection
+                .update(AJEntityCollection.VISIBILITY_DML, AJEntityCollection.VISIBILITY_DML_FILTER,
+                    this.context.classId(), this.courseId,
+                    Utils.convertListToPostgresArrayStringRepresentation(input.getList()));
+            LOGGER.debug("Marked {} items visible", count);
+            return new ExecutionResult<>(MessageResponseFactory
+                .createNoContentResponse(RESOURCE_BUNDLE.getString("updated"),
+                    EventBuilderFactory.getContentVisibleEventBuilder(context.classId(), context.request())),
+                ExecutionResult.ExecutionStatus.SUCCESSFUL);
+        } catch (DBException e) {
+            LOGGER.error("Unable to mark content visible for class {}", this.context.classId(), e);
+            throw e;
+        }
 
     }
 
     @Override
     public boolean handlerReadOnly() {
         return false;
+    }
+
+    private JsonArray getInputToMarkVisible() {
+        JsonArray input = new JsonArray();
+        JsonArray contentsCollection = this.context.request().getJsonArray(AJEntityClass.CV_COLLECTIONS);
+        JsonArray contentsAssessment = this.context.request().getJsonArray((AJEntityClass.CV_ASSESSMENTS));
+        if (contentsAssessment != null && !contentsAssessment.isEmpty()) {
+            input.addAll(contentsAssessment);
+        }
+        if (contentsCollection != null && !contentsCollection.isEmpty()) {
+            input.addAll(contentsCollection);
+        }
+        return input;
     }
 
     private static class DefaultPayloadValidator implements PayloadValidator {
