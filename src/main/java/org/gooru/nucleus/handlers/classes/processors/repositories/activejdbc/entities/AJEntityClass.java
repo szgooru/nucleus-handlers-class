@@ -47,12 +47,9 @@ public class AJEntityClass extends Model {
 
     // Dummy field names for Content Visibility
     // TODO this needs to change when going through the setting of content visibility in new model
-    public static final String CV_UNITS = "units";
-    public static final String CV_LESSONS = "lessons";
     public static final String CV_COLLECTIONS = "collections";
     public static final String CV_ASSESSMENTS = "assessments";
-    public static final Set<String> CV_FIELDS =
-        new HashSet<>(Arrays.asList(CV_ASSESSMENTS, CV_COLLECTIONS, CV_LESSONS, CV_UNITS));
+    public static final Set<String> CV_FIELDS = new HashSet<>(Arrays.asList(CV_ASSESSMENTS, CV_COLLECTIONS));
 
     public static final String CONTENT_VISIBILITY_TYPE_NAME = "content_visibility_type";
     public static final String CONTENT_VISIBILITY_TYPE_VISIBLE_NONE = "visible_none";
@@ -212,6 +209,22 @@ public class AJEntityClass extends Model {
             this.set(CONTENT_VISIBILITY, fc.convertField(visibility.toString()));
         } else {
             this.set(CONTENT_VISIBILITY, visibility.toString());
+        }
+    }
+
+    public String getContentVisibility() {
+        // Treat null and default as visible all
+        String contentVisibilitySetting = this.getString(CONTENT_VISIBILITY);
+        if (contentVisibilitySetting == null || contentVisibilitySetting
+            .equalsIgnoreCase(AJEntityClass.CONTENT_VISIBILITY_TYPE_VISIBLE_ALL)) {
+            return AJEntityClass.CONTENT_VISIBILITY_TYPE_VISIBLE_ALL;
+        } else if (contentVisibilitySetting
+            .equalsIgnoreCase(AJEntityClass.CONTENT_VISIBILITY_TYPE_VISIBLE_COLLECTION)) {
+            return AJEntityClass.CONTENT_VISIBILITY_TYPE_VISIBLE_COLLECTION;
+        } else if (contentVisibilitySetting.equalsIgnoreCase(AJEntityClass.CONTENT_VISIBILITY_TYPE_VISIBLE_NONE)) {
+            return AJEntityClass.CONTENT_VISIBILITY_TYPE_VISIBLE_NONE;
+        } else {
+            return AJEntityClass.CONTENT_VISIBILITY_TYPE_VISIBLE_ALL;
         }
     }
 

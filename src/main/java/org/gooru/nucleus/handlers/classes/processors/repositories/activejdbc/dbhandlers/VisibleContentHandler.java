@@ -85,10 +85,9 @@ class VisibleContentHandler implements DBHandler {
         // specific id. just tell that everything is visible. If only collections are visible, then fetch and send
         // assessments which are explicitly marked as visible. If everything is hidden, then fetch everything from
         // course and send it back.
-        String contentVisibilitySetting = this.entityClass.getString(AJEntityClass.CONTENT_VISIBILITY);
+        String contentVisibilitySetting = this.entityClass.getContentVisibility();
         JsonObject response = new JsonObject();
-        if (contentVisibilitySetting == null || contentVisibilitySetting
-            .equalsIgnoreCase(AJEntityClass.CONTENT_VISIBILITY_TYPE_VISIBLE_ALL)) {
+        if (contentVisibilitySetting.equalsIgnoreCase(AJEntityClass.CONTENT_VISIBILITY_TYPE_VISIBLE_ALL)) {
             response.put(AJEntityClass.CONTENT_VISIBILITY, AJEntityClass.CONTENT_VISIBILITY_TYPE_VISIBLE_ALL);
         } else if (contentVisibilitySetting
             .equalsIgnoreCase(AJEntityClass.CONTENT_VISIBILITY_TYPE_VISIBLE_COLLECTION)) {

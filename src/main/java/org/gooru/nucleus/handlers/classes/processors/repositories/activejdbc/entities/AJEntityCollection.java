@@ -20,6 +20,9 @@ public class AJEntityCollection extends Model {
     public static final String FETCH_STATISTICS_QUERY =
         "select course_id, unit_id, lesson_id, format, count(id) from collection where course_id = ? and is_deleted ="
             + " false and class_visibility ?? ? group by course_id, unit_id, lesson_id, format";
+    public static final String COLLECTIONS_QUERY_FILTER =
+        "course_id = ?::uuid and id = ANY(?::uuid[]) and is_deleted = false and not class_visibility ?? ?";
+    public static final String TABLE_COLLECTION = "collection";
 
     private static final String FORMAT_TYPE = "format";
     private static final String FORMAT_TYPE_COLLECTION = "collection";

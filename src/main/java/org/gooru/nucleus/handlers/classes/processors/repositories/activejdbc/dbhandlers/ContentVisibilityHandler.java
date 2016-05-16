@@ -1,6 +1,5 @@
 package org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.dbhandlers;
 
-import java.util.Map;
 import java.util.ResourceBundle;
 
 import org.gooru.nucleus.handlers.classes.constants.MessageConstants;
@@ -42,8 +41,8 @@ public class ContentVisibilityHandler implements DBHandler {
                 ExecutionResult.ExecutionStatus.FAILED);
         }
         // The user should not be anonymous
-        if (context.userId() == null || context.userId().isEmpty()
-            || context.userId().equalsIgnoreCase(MessageConstants.MSG_USER_ANONYMOUS)) {
+        if (context.userId() == null || context.userId().isEmpty() || context.userId()
+            .equalsIgnoreCase(MessageConstants.MSG_USER_ANONYMOUS)) {
             LOGGER.warn("Anonymous user attempting to mark content visible in class");
             return new ExecutionResult<>(
                 MessageResponseFactory.createForbiddenResponse(RESOURCE_BUNDLE.getString("not.allowed")),
@@ -57,8 +56,9 @@ public class ContentVisibilityHandler implements DBHandler {
                 ExecutionResult.ExecutionStatus.FAILED);
         }
         // Our validators should certify this
-        JsonObject errors = new DefaultPayloadValidator().validatePayload(context.request(),
-            AJEntityClass.contentVisibilityFieldSelector(), AJEntityClass.getValidatorRegistry());
+        JsonObject errors = new DefaultPayloadValidator()
+            .validatePayload(context.request(), AJEntityClass.contentVisibilityFieldSelector(),
+                AJEntityClass.getValidatorRegistry());
         if (errors != null && !errors.isEmpty()) {
             LOGGER.warn("Validation errors for request");
             return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(errors),
@@ -81,50 +81,38 @@ public class ContentVisibilityHandler implements DBHandler {
         // Class should be of current version and Class should not be archived
         if (!entityClass.isCurrentVersion() || entityClass.isArchived()) {
             LOGGER.warn("Class '{}' is either archived or not of current version", context.classId());
-            return new ExecutionResult<>(
-                MessageResponseFactory
-                    .createInvalidRequestResponse(RESOURCE_BUNDLE.getString("class.archived.or.incorrect.version")),
+            return new ExecutionResult<>(MessageResponseFactory
+                .createInvalidRequestResponse(RESOURCE_BUNDLE.getString("class.archived.or.incorrect.version")),
                 ExecutionResult.ExecutionStatus.FAILED);
         }
-        // Check authorization
         ExecutionResult<MessageResponse> result =
-            AuthorizerBuilder.buildContentVisibilityAuthorizer(this.context).authorize(entityClass);
+            ContentVisibilityHelper.validatePayloadWithClassSetting(this.context.request(), this.entityClass);
+        if (result.hasFailed()) {
+            return result;
+        }
+        // Check authorization
+        result = AuthorizerBuilder.buildContentVisibilityAuthorizer(this.context).authorize(entityClass);
         if (result.hasFailed()) {
             return result;
         }
         // Class should be associated with course
         String courseId = this.entityClass.getString(AJEntityClass.COURSE_ID);
         if (courseId == null) {
-            LOGGER.error("Class '{}' is not assigned to course, hence cannot set content visibility",
-                context.classId());
+            LOGGER
+                .error("Class '{}' is not assigned to course, hence cannot set content visibility", context.classId());
             return new ExecutionResult<>(
                 MessageResponseFactory.createInvalidRequestResponse(RESOURCE_BUNDLE.getString("class.without.course")),
                 ExecutionResult.ExecutionStatus.FAILED);
         }
         // Now validate the payload with DB
-        return ContentVisibilityHelper.validatePayloadWithDB(context.request(), courseId);
+        return ContentVisibilityHelper.validatePayloadWithDB(context.request(), courseId, this.context.classId());
     }
 
     @Override
     public ExecutionResult<MessageResponse> executeRequest() {
-        // Merge the DB provided visibility with what request provides
-        String dbVisibility = this.entityClass.getString(AJEntityClass.CONTENT_VISIBILITY);
-        JsonObject finalVisibility = ContentVisibilityHelper.updateContentVisibility(context.request(), dbVisibility);
-        this.entityClass.setContentVisibility(finalVisibility);
-        this.entityClass.setModifierId(this.context.userId());
-        boolean result = this.entityClass.save();
-        if (!result) {
-            LOGGER.error("Class with id '{}' failed to save content visibility", context.classId());
-            if (this.entityClass.hasErrors()) {
-                Map<String, String> map = this.entityClass.errors();
-                JsonObject errors = new JsonObject();
-                map.forEach(errors::put);
-                return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(errors),
-                    ExecutionResult.ExecutionStatus.FAILED);
-            }
-        }
-        return new ExecutionResult<>(
-            MessageResponseFactory.createNoContentResponse(RESOURCE_BUNDLE.getString("updated"),
+        // TODO: Provide implementation
+        return new ExecutionResult<>(MessageResponseFactory
+            .createNoContentResponse(RESOURCE_BUNDLE.getString("updated"),
                 EventBuilderFactory.getContentVisibleEventBuilder(context.classId(), context.request())),
             ExecutionResult.ExecutionStatus.SUCCESSFUL);
 
