@@ -8,7 +8,7 @@ import org.javalite.activejdbc.annotations.Table;
  */
 @Table("collection")
 public class AJEntityCollection extends Model {
-    
+
     public static final String ID = "id";
     public static final String COURSE_ID = "course_id";
     public static final String UNIT_ID = "unit_id";
@@ -19,7 +19,7 @@ public class AJEntityCollection extends Model {
     public static final String COURSE = "course";
     public static final String UNITS = "units";
     public static final String LESSONS = "lessons";
-    
+
     // Instead of stating equals assessment we are saying not equals collection because we need to include both
     // assessment and external assessment here
     public static final String FETCH_VISIBLE_ASSESSMENTS_QUERY =
@@ -34,16 +34,16 @@ public class AJEntityCollection extends Model {
         "select course_id, unit_id, lesson_id, format, count(id) from collection where course_id = ?::uuid and "
             + "is_deleted = false and class_visibility ?? ? group by course_id, unit_id, lesson_id, format";
     public static final String COLLECTIONS_QUERY_FILTER =
-        "course_id = ?::uuid and id = ANY(?::uuid[]) and is_deleted = false and not class_visibility ?? ?";
+        "course_id = ?::uuid and id = ANY(?::uuid[]) and is_deleted = false and (not class_visibility ?? ? or "
+            + "class_visibility is null)";
     public static final String TABLE_COLLECTION = "collection";
 
     public static final String FORMAT_TYPE = "format";
     public static final String FORMAT_TYPE_COLLECTION = "collection";
     public static final String FORMAT_TYPE_ASSESSMENT = "assessment";
     public static final String FORMAT_TYPE_ASSESSMENT_EXT = "assessment-external";
-    public static final String VISIBILITY_DML = "class_visibility = class_visibility || ?";
-    public static final String VISIBILITY_DML_FILTER =
-        "course_id = ?::uuid and is_deleted = false and id = ANY(?::uuid[])";
+    public static final String VISIBILITY_DML = "update collection set class_visibility = class_visibility || "
+        + "?::jsonb where course_id = ?::uuid and is_deleted = false and id = ANY(?::uuid[])";
 
     // The model needs to be hydrated with format, else it may fail
     public boolean isAssessment() {

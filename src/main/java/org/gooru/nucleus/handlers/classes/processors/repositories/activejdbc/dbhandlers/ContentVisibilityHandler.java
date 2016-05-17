@@ -14,6 +14,7 @@ import org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.val
 import org.gooru.nucleus.handlers.classes.processors.responses.ExecutionResult;
 import org.gooru.nucleus.handlers.classes.processors.responses.MessageResponse;
 import org.gooru.nucleus.handlers.classes.processors.responses.MessageResponseFactory;
+import org.javalite.activejdbc.Base;
 import org.javalite.activejdbc.DBException;
 import org.javalite.activejdbc.LazyList;
 import org.slf4j.Logger;
@@ -121,10 +122,9 @@ public class ContentVisibilityHandler implements DBHandler {
         // From their perspective they are doing class operations
 
         try {
-            int count = AJEntityCollection
-                .update(AJEntityCollection.VISIBILITY_DML, AJEntityCollection.VISIBILITY_DML_FILTER,
-                    this.context.classId(), this.courseId,
-                    Utils.convertListToPostgresArrayStringRepresentation(input.getList()));
+            int count =
+                Base.exec(AJEntityCollection.VISIBILITY_DML, new JsonArray().add(this.context.classId()).toString(),
+                    this.courseId, Utils.convertListToPostgresArrayStringRepresentation(input.getList()));
             LOGGER.debug("Marked {} items visible", count);
             return new ExecutionResult<>(MessageResponseFactory
                 .createNoContentResponse(RESOURCE_BUNDLE.getString("updated"),
