@@ -13,7 +13,7 @@ public class AJEntityCollection extends Model {
     public static final String COURSE_ID = "course_id";
     public static final String UNIT_ID = "unit_id";
     public static final String LESSON_ID = "lesson_id";
-    public static final String CA_COUNT = "ca_count";
+    public static final String CA_COUNT = "count";
     public static final String ASSESSMENT_COUNT = "assessment_count";
     public static final String COLLECTION_COUNT = "collection_count";
     public static final String COURSE = "course";
