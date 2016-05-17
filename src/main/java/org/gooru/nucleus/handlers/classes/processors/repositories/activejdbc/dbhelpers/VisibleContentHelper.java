@@ -1,10 +1,6 @@
 package org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.dbhelpers;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.entities.AJEntityClass;
 import org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.entities.AJEntityCollection;
@@ -33,9 +29,9 @@ public final class VisibleContentHelper {
      * Based on the provided class Id and courseId, find out all the assessments that are visible for that class.
      * This includes both assessments and external assessments
      *
-     * @param classId
-     * @param courseId
-     * @param result   JsonbObject which will be populated with all the assessments id which are visible in that class
+     * @param classId  Id of the class for which visibility is needed
+     * @param courseId The course associated with specified class
+     * @param result   JsonObject which will be populated with all the assessments id which are visible in that class
      */
     public static void populateVisibleAssessments(String classId, String courseId, JsonObject result) {
         LazyList<AJEntityCollection> assessments =
@@ -51,8 +47,8 @@ public final class VisibleContentHelper {
      * Based on the provided class Id and courseId, find out all the assessments/collections that are visible for that
      * class. This includes both assessments and external assessments
      *
-     * @param classId
-     * @param courseId
+     * @param classId  Id of the class for which visibility is needed
+     * @param courseId The course associated with specified class
      * @param result   JsonObject which will get populated with all assessments/collections which are visible
      */
     public static void populateVisibleItems(String classId, String courseId, JsonObject result) {
@@ -83,19 +79,21 @@ public final class VisibleContentHelper {
      * It does not roll up the same to Unit and Course. The caller need to run arithmetic to roll up from lesson
      * level to above levels
      *
-     * @param classId
-     * @param courseId
+     * @param classId  Id of the class for which visibility is needed
+     * @param courseId The course associated with specified class
      * @return JsonObject with necessary statistics
      */
     public static JsonObject getCourseVisibleStatistics(String classId, String courseId) {
-        // TODO: Implement this using query defined in the AJEntityCollection
         List<Map> counts = Base.findAll(AJEntityCollection.FETCH_STATISTICS_QUERY, courseId, classId);
         Map<String, Set<String>> unitLessonMap = new HashMap<>();
         Map<String, Integer> collectionCountByLesson = new HashMap<>();
         Map<String, Integer> assessmentCountByLesson = new HashMap<>();
 
         counts.forEach(map -> {
+            Integer count;
             String unitId = map.get(AJEntityCollection.UNIT_ID).toString();
+            String lessonId = map.get(AJEntityCollection.LESSON_ID).toString();
+            String format = map.get(AJEntityCollection.FORMAT_TYPE).toString();
             if (unitLessonMap.containsKey(unitId)) {
                 unitLessonMap.get(unitId).add(map.get(AJEntityCollection.LESSON_ID).toString());
             } else {
@@ -103,20 +101,14 @@ public final class VisibleContentHelper {
                 lessons.add(map.get(AJEntityCollection.LESSON_ID).toString());
                 unitLessonMap.put(unitId, lessons);
             }
-        });
-
-        counts.forEach(map -> {
-            String lessonId = map.get(AJEntityCollection.LESSON_ID).toString();
-            String format = map.get(AJEntityCollection.FORMAT_TYPE).toString();
-            Integer count;
             try {
                 count = Convert.toInteger(map.get(AJEntityCollection.CA_COUNT));
             } catch (ConversionException ce) {
                 count = 0;
             }
 
-            if (format.equalsIgnoreCase(AJEntityCollection.FORMAT_TYPE_ASSESSMENT)
-                || format.equalsIgnoreCase(AJEntityCollection.FORMAT_TYPE_ASSESSMENT_EXT)) {
+            if (format.equalsIgnoreCase(AJEntityCollection.FORMAT_TYPE_ASSESSMENT) || format
+                .equalsIgnoreCase(AJEntityCollection.FORMAT_TYPE_ASSESSMENT_EXT)) {
                 assessmentCountByLesson.put(lessonId, count);
             } else if (format.equalsIgnoreCase(AJEntityCollection.FORMAT_TYPE_COLLECTION)) {
                 collectionCountByLesson.put(lessonId, count);
@@ -124,10 +116,9 @@ public final class VisibleContentHelper {
         });
 
         JsonObject result = new JsonObject();
-        Set<String> units = unitLessonMap.keySet();
         JsonArray unitArray = new JsonArray();
-        for (String unitId : units) {
-            Set<String> lessons = unitLessonMap.get(unitId);
+        for (Map.Entry<String, Set<String>> stringSetEntry : unitLessonMap.entrySet()) {
+            Set<String> lessons = stringSetEntry.getValue();
             JsonArray lessonArray = new JsonArray();
             for (String lessonId : lessons) {
                 JsonObject lesson = new JsonObject();
@@ -140,7 +131,7 @@ public final class VisibleContentHelper {
             }
 
             JsonObject unit = new JsonObject();
-            unit.put(AJEntityCollection.ID, unitId);
+            unit.put(AJEntityCollection.ID, stringSetEntry.getKey());
             unit.put(AJEntityCollection.LESSONS, lessonArray);
 
             unitArray.add(unit);
