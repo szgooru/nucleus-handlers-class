@@ -75,13 +75,14 @@ class VisibleContentStatsHandler implements DBHandler {
                 MessageResponseFactory.createInvalidRequestResponse(RESOURCE_BUNDLE.getString("class.without.course")),
                 ExecutionResult.ExecutionStatus.FAILED);
         }
-        return null;
+        return new ExecutionResult<>(null, ExecutionResult.ExecutionStatus.CONTINUE_PROCESSING);
     }
 
     @Override
     public ExecutionResult<MessageResponse> executeRequest() {
         JsonObject response = VisibleContentHelper.getCourseVisibleStatistics(this.context.classId(), this.courseId);
-        return null;
+        return new ExecutionResult<>(MessageResponseFactory.createOkayResponse(response),
+            ExecutionResult.ExecutionStatus.SUCCESSFUL);
     }
 
     @Override
