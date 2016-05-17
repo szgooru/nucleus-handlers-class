@@ -84,7 +84,7 @@ public final class ContentVisibilityHelper {
                 long expectedCount = input.size();
                 long count =
                     Base.count(AJEntityCollection.TABLE_COLLECTION, AJEntityCollection.COLLECTIONS_QUERY_FILTER,
-                        courseId, classId, Utils.convertListToPostgresArrayStringRepresentation(input.getList()));
+                        courseId, Utils.convertListToPostgresArrayStringRepresentation(input.getList()), classId);
 
                 if (expectedCount == count) {
                     return new ExecutionResult<>(null, ExecutionResult.ExecutionStatus.CONTINUE_PROCESSING);
