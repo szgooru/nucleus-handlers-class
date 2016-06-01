@@ -112,8 +112,7 @@ class JoinClassByStudentHandler implements DBHandler {
         }
         // Delegate it to authorizer to confirm if this is either an open class
         // in which case allow user to join or it is restricted class but the
-        // user
-        // is invited which is also fine. Else no authorization
+        // user is invited which is also fine. Else no authorization
         return AuthorizerBuilder.buildJoinClassByStudentAuthorizer(this.context, this.membership)
             .authorize(this.entityClass);
     }
@@ -136,10 +135,10 @@ class JoinClassByStudentHandler implements DBHandler {
             // In case user is already invited we need to update the status
             if (AJClassMember.CLASS_MEMBER_STATUS_TYPE_INVITED
                 .equalsIgnoreCase(this.membership.getString(AJClassMember.CLASS_MEMBER_STATUS))) {
+                this.membership.setUserId(this.context.userId());
                 this.membership.setStatusJoined();
             } else {
-                // User is already joined, so nothing to do; just return
-                // successfully
+                // User is already joined, so nothing to do; just return successfully
                 return new ExecutionResult<>(
                     MessageResponseFactory.createNoContentResponse(RESOURCE_BUNDLE.getString("joined")),
                     ExecutionResult.ExecutionStatus.SUCCESSFUL);
