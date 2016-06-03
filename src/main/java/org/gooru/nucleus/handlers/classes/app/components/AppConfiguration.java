@@ -36,6 +36,7 @@ public final class AppConfiguration implements Initializer {
                         LOGGER.warn("App configuration is not available");
                     } else {
                         configuration.put(KEY, appConfiguration);
+                        initialized = true;
                     }
                 }
             }
