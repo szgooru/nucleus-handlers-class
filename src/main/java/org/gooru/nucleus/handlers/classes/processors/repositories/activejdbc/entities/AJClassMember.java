@@ -45,7 +45,7 @@ public class AJClassMember extends Model {
     public static final String FETCH_USER_MEMBERSHIP_QUERY =
         "select class_id from class_member cm, class c where cm.user_id = ?::uuid and cm.class_member_status = "
             + "'joined'::class_member_status_type and cm.class_id = c.id and c.is_deleted = false order by "
-            + "cm.created_at desc";
+            + "cm.updated_at desc";
     public static final String FETCH_MEMBERSHIP_COUNT_FOR_CLASSES =
         "select class_id, count(class_id) from class_member where "
             + "class_member_status = 'joined'::class_member_status_type and class_id = ANY"
