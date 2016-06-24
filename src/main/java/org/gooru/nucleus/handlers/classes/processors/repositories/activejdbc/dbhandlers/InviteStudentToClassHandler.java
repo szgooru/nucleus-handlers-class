@@ -6,6 +6,7 @@ import java.util.ResourceBundle;
 import org.gooru.nucleus.handlers.classes.constants.MessageConstants;
 import org.gooru.nucleus.handlers.classes.processors.ProcessorContext;
 import org.gooru.nucleus.handlers.classes.processors.events.EventBuilderFactory;
+import org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.Utils;
 import org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.dbauth.AuthorizerBuilder;
 import org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.entities.AJClassMember;
 import org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.entities.AJEntityClass;
@@ -44,8 +45,8 @@ class InviteStudentToClassHandler implements DBHandler {
                 ExecutionResult.ExecutionStatus.FAILED);
         }
         // The user should not be anonymous
-        if (context.userId() == null || context.userId().isEmpty()
-            || context.userId().equalsIgnoreCase(MessageConstants.MSG_USER_ANONYMOUS)) {
+        if (context.userId() == null || context.userId().isEmpty() || context.userId()
+            .equalsIgnoreCase(MessageConstants.MSG_USER_ANONYMOUS)) {
             LOGGER.warn("Anonymous user attempting to invite student to class");
             return new ExecutionResult<>(
                 MessageResponseFactory.createForbiddenResponse(RESOURCE_BUNDLE.getString("not.allowed")),
@@ -59,8 +60,9 @@ class InviteStudentToClassHandler implements DBHandler {
                 ExecutionResult.ExecutionStatus.FAILED);
         }
         // Our validators should certify this
-        JsonObject errors = new DefaultPayloadValidator().validatePayload(context.request(),
-            AJEntityClass.inviteStudentFieldSelector(), AJEntityClass.getValidatorRegistry());
+        JsonObject errors = new DefaultPayloadValidator()
+            .validatePayload(context.request(), AJEntityClass.inviteStudentFieldSelector(),
+                AJEntityClass.getValidatorRegistry());
         if (errors != null && !errors.isEmpty()) {
             LOGGER.warn("Validation errors for request");
             return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(errors),
@@ -83,9 +85,8 @@ class InviteStudentToClassHandler implements DBHandler {
         // Class should be of current version and Class should not be archived
         if (!entityClass.isCurrentVersion() || entityClass.isArchived()) {
             LOGGER.warn("Class '{}' is either archived or not of current version", context.classId());
-            return new ExecutionResult<>(
-                MessageResponseFactory
-                    .createInvalidRequestResponse(RESOURCE_BUNDLE.getString("class.archived.or.incorrect.version")),
+            return new ExecutionResult<>(MessageResponseFactory
+                .createInvalidRequestResponse(RESOURCE_BUNDLE.getString("class.archived.or.incorrect.version")),
                 ExecutionResult.ExecutionStatus.FAILED);
         }
 
@@ -96,13 +97,40 @@ class InviteStudentToClassHandler implements DBHandler {
     public ExecutionResult<MessageResponse> executeRequest() {
         String creatorSystem = this.context.request().getString(AJClassMember.CREATOR_SYSTEM);
         JsonArray invitees = this.context.request().getJsonArray(AJEntityClass.INVITEES);
+        JsonArray prunedInvitees = pruneAlreadyInvitedUsers(invitees);
 
-        return saveInvitations(creatorSystem, invitees);
+        if (prunedInvitees.isEmpty()) {
+            // Nothing to do
+            return new ExecutionResult<>(
+                MessageResponseFactory.createNoContentResponse(RESOURCE_BUNDLE.getString("invited")),
+                ExecutionResult.ExecutionStatus.SUCCESSFUL);
+        }
+        return saveInvitations(creatorSystem, prunedInvitees);
     }
 
     @Override
     public boolean handlerReadOnly() {
         return false;
+    }
+
+    private JsonArray pruneAlreadyInvitedUsers(JsonArray invitees) {
+        JsonArray result = new JsonArray();
+        LazyList<AJClassMember> memberships = AJClassMember
+            .where(AJClassMember.FETCH_FOR_MULTIPLE_EMAILS_QUERY_FILTER, context.classId(),
+                Utils.convertListToPostgresArrayStringRepresentation(invitees.getList()));
+        if (memberships.isEmpty()) {
+            // Add everything
+            return result.addAll(invitees);
+        } else if (memberships.size() == invitees.size()) {
+            // Nothing to add, all present already
+            return result;
+        } else {
+            result.addAll(invitees);
+            for (AJClassMember member : memberships) {
+                result.remove(member.getString(AJClassMember.EMAIL));
+            }
+        }
+        return result;
     }
 
     private ExecutionResult<MessageResponse> saveInvitations(String creatorSystem, JsonArray invitees) {
@@ -113,8 +141,8 @@ class InviteStudentToClassHandler implements DBHandler {
                     AJClassMember.CLASS_MEMBER_STATUS_TYPE_INVITED, creatorSystem);
             }
             Base.executeBatch(ps);
-            return new ExecutionResult<>(
-                MessageResponseFactory.createNoContentResponse(RESOURCE_BUNDLE.getString("invited"),
+            return new ExecutionResult<>(MessageResponseFactory
+                .createNoContentResponse(RESOURCE_BUNDLE.getString("invited"),
                     EventBuilderFactory.getStudentInvitedEventBuilder(context.classId(), invitees)),
                 ExecutionResult.ExecutionStatus.SUCCESSFUL);
 
