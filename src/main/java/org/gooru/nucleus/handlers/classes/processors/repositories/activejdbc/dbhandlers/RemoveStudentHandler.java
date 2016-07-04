@@ -74,7 +74,7 @@ class RemoveStudentHandler implements DBHandler {
             AJClassMember.delete(AJClassMember.REMOVE_STUDENT_QUERY_FILTER, context.classId(), context.studentId());
             return new ExecutionResult<>(
                 MessageResponseFactory.createNoContentResponse(RESOURCE_BUNDLE.getString("student.removed"),
-                    EventBuilderFactory.getInviteRemovalEventBuilder(context.classId(), context.studentEmail())),
+                    EventBuilderFactory.getStudentRemovalEventBuilder(context.classId(), context.studentId())),
                 ExecutionResult.ExecutionStatus.SUCCESSFUL);
 
         } catch (DBException dbe) {
