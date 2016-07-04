@@ -49,7 +49,17 @@ public class AJEntityClass extends Model {
     // TODO this needs to change when going through the setting of content visibility in new model
     public static final String CV_COLLECTIONS = "collections";
     public static final String CV_ASSESSMENTS = "assessments";
-    public static final Set<String> CV_FIELDS = new HashSet<>(Arrays.asList(CV_ASSESSMENTS, CV_COLLECTIONS));
+    public static final String CV_SCOPE = "scope";
+    public static final String CV_TYPE = "type";
+    public static final String CV_BOUNDRY = "boundry";
+    public static final String CV_ENTITY = "entity";
+    public static final String CV_COURSE_ID = "course_id";
+    public static final String CV_UNIT_ID = "unit_id";
+    public static final String CV_LESSON_ID = "lesson_id";
+    public static final String CV_TYPE_SPECIFIC = "specific";
+    public static final String CV_TYPE_ALL = "all";
+    public static final String CV_ENTITY_ALL = "all";
+    public static final Set<String> CV_FIELDS = new HashSet<>(Arrays.asList(CV_SCOPE, CV_ASSESSMENTS, CV_COLLECTIONS));
 
     public static final String CONTENT_VISIBILITY_TYPE_NAME = "content_visibility_type";
     public static final String CONTENT_VISIBILITY_TYPE_VISIBLE_NONE = "visible_none";

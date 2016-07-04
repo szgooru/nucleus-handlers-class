@@ -1,5 +1,7 @@
 package org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.dbhandlers;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.ResourceBundle;
 
 import org.gooru.nucleus.handlers.classes.constants.MessageConstants;
@@ -33,6 +35,15 @@ public class ContentVisibilityHandler implements DBHandler {
     private AJEntityClass entityClass;
     private String courseId;
 
+    private String type;
+    private String entity;
+    private String courseIdFromRequest;
+    private String unitIdFromRequest;
+    private String lessonIdFromRequest;
+
+    private JsonObject scope;
+    private JsonObject boundry;
+
     ContentVisibilityHandler(ProcessorContext context) {
         this.context = context;
     }
@@ -47,8 +58,8 @@ public class ContentVisibilityHandler implements DBHandler {
                 ExecutionResult.ExecutionStatus.FAILED);
         }
         // The user should not be anonymous
-        if (context.userId() == null || context.userId().isEmpty() || context.userId()
-            .equalsIgnoreCase(MessageConstants.MSG_USER_ANONYMOUS)) {
+        if (context.userId() == null || context.userId().isEmpty()
+            || context.userId().equalsIgnoreCase(MessageConstants.MSG_USER_ANONYMOUS)) {
             LOGGER.warn("Anonymous user attempting to mark content visible in class");
             return new ExecutionResult<>(
                 MessageResponseFactory.createForbiddenResponse(RESOURCE_BUNDLE.getString("not.allowed")),
@@ -62,9 +73,7 @@ public class ContentVisibilityHandler implements DBHandler {
                 ExecutionResult.ExecutionStatus.FAILED);
         }
         // Our validators should certify this
-        JsonObject errors = new DefaultPayloadValidator()
-            .validatePayload(context.request(), AJEntityClass.contentVisibilityFieldSelector(),
-                AJEntityClass.getValidatorRegistry());
+        JsonObject errors = payloadValidator(context.request());
         if (errors != null && !errors.isEmpty()) {
             LOGGER.warn("Validation errors for request");
             return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(errors),
@@ -87,12 +96,13 @@ public class ContentVisibilityHandler implements DBHandler {
         // Class should be of current version and Class should not be archived
         if (!entityClass.isCurrentVersion() || entityClass.isArchived()) {
             LOGGER.warn("Class '{}' is either archived or not of current version", context.classId());
-            return new ExecutionResult<>(MessageResponseFactory
-                .createInvalidRequestResponse(RESOURCE_BUNDLE.getString("class.archived.or.incorrect.version")),
+            return new ExecutionResult<>(
+                MessageResponseFactory
+                    .createInvalidRequestResponse(RESOURCE_BUNDLE.getString("class.archived.or.incorrect.version")),
                 ExecutionResult.ExecutionStatus.FAILED);
         }
         ExecutionResult<MessageResponse> result =
-            ContentVisibilityHelper.validatePayloadWithClassSetting(this.context.request(), this.entityClass);
+            ContentVisibilityHelper.validatePayloadWithClassSetting(this.context.request(), this.entityClass, this.entity);
         if (result.hasFailed()) {
             return result;
         }
@@ -104,36 +114,126 @@ public class ContentVisibilityHandler implements DBHandler {
         // Class should be associated with course
         courseId = this.entityClass.getString(AJEntityClass.COURSE_ID);
         if (courseId == null) {
-            LOGGER
-                .error("Class '{}' is not assigned to course, hence cannot set content visibility", context.classId());
+            LOGGER.error("Class '{}' is not assigned to course, hence cannot set content visibility",
+                context.classId());
             return new ExecutionResult<>(
                 MessageResponseFactory.createInvalidRequestResponse(RESOURCE_BUNDLE.getString("class.without.course")),
                 ExecutionResult.ExecutionStatus.FAILED);
         }
         // Now validate the payload with DB
-        return ContentVisibilityHelper.validatePayloadWithDB(context.request(), courseId, this.context.classId());
+        ExecutionResult<MessageResponse> exeResult = null;
+        if (this.type.equalsIgnoreCase(AJEntityClass.CV_TYPE_SPECIFIC)) {
+            exeResult =
+                ContentVisibilityHelper.validatePayloadWithDB(context.request(), courseId, this.context.classId());
+        } else {
+            exeResult = new ExecutionResult<>(null, ExecutionResult.ExecutionStatus.CONTINUE_PROCESSING);
+        }
+
+        return exeResult;
     }
 
     @Override
     public ExecutionResult<MessageResponse> executeRequest() {
-        JsonArray input = getInputToMarkVisible();
-        // Note that here we are making collection table updates, this does not qualify as collection update
-        // So we should not mark modifier id or modified date as the user may not even have access to these collections
-        // From their perspective they are doing class operations
+        if (this.type.equalsIgnoreCase(AJEntityClass.CV_TYPE_SPECIFIC)) {
+            JsonArray input = getInputToMarkVisible();
+            // Note that here we are making collection table updates, this does
+            // not qualify as collection update
+            // So we should not mark modifier id or modified date as the user
+            // may not even have access to these collections
+            // From their perspective they are doing class operations
+            LOGGER.debug("course id: {}", this.courseId);
+            LOGGER.debug("collection/assessments to be updated: {}", input.toString());
+            try {
+                int count =
+                    Base.exec(AJEntityCollection.VISIBILITY_DML, new JsonArray().add(this.context.classId()).toString(),
+                        this.courseId, Utils.convertListToPostgresArrayStringRepresentation(input.getList()));
+                LOGGER.debug("Marked {} items visible", count);
+                return new ExecutionResult<>(
+                    MessageResponseFactory.createNoContentResponse(RESOURCE_BUNDLE.getString("updated"),
+                        EventBuilderFactory.getContentVisibleEventBuilder(context.classId(), context.request())),
+                    ExecutionResult.ExecutionStatus.SUCCESSFUL);
+            } catch (DBException e) {
+                LOGGER.error("Unable to mark content visible for class {}", this.context.classId(), e);
+                throw e;
+            }
+        } else if (this.type.equalsIgnoreCase(AJEntityClass.CV_TYPE_ALL)) {
+            try {
+                int count = 0;
+                List<String> items;
+                if (this.entity.equalsIgnoreCase(AJEntityClass.CV_ENTITY_ALL)) {
+                    items = ContentVisibilityHelper.getNonVisibleCollectionsAssessments(this.context.classId(),
+                        this.courseIdFromRequest, this.unitIdFromRequest, this.lessonIdFromRequest);
+                } else if (this.entity.equalsIgnoreCase(AJEntityCollection.FORMAT_TYPE_COLLECTION)) {
+                    items = ContentVisibilityHelper.getNonVisibleItems(this.context.classId(), this.courseIdFromRequest,
+                        this.unitIdFromRequest, this.lessonIdFromRequest, AJEntityCollection.FORMAT_TYPE_COLLECTION);
+                } else {
+                    items =
+                        ContentVisibilityHelper.getNonVisibleItems(this.context.classId(), this.courseIdFromRequest,
+                            this.unitIdFromRequest, this.lessonIdFromRequest, AJEntityCollection.FORMAT_TYPE_ASSESSMENT);
+                }
 
-        try {
-            int count =
-                Base.exec(AJEntityCollection.VISIBILITY_DML, new JsonArray().add(this.context.classId()).toString(),
-                    this.courseId, Utils.convertListToPostgresArrayStringRepresentation(input.getList()));
-            LOGGER.debug("Marked {} items visible", count);
-            return new ExecutionResult<>(MessageResponseFactory
-                .createNoContentResponse(RESOURCE_BUNDLE.getString("updated"),
-                    EventBuilderFactory.getContentVisibleEventBuilder(context.classId(), context.request())),
-                ExecutionResult.ExecutionStatus.SUCCESSFUL);
-        } catch (DBException e) {
-            LOGGER.error("Unable to mark content visible for class {}", this.context.classId(), e);
-            throw e;
+                if (this.courseIdFromRequest != null && this.unitIdFromRequest != null
+                    && this.lessonIdFromRequest != null) {
+                    if (this.entity.equalsIgnoreCase(AJEntityClass.CV_ENTITY_ALL)) {
+                        count = Base.exec(AJEntityCollection.UPDATE_ITEMS_CV_BY_CUL,
+                            new JsonArray().add(this.context.classId()).toString(), this.courseIdFromRequest,
+                            this.unitIdFromRequest, this.lessonIdFromRequest,
+                            Utils.convertListToPostgresArrayStringRepresentation(items));
+                    } else if (this.entity.equalsIgnoreCase(AJEntityCollection.FORMAT_TYPE_COLLECTION)) {
+                        count = Base.exec(AJEntityCollection.UPDATE_COLLECTIONS_CV_BY_CUL,
+                            new JsonArray().add(this.context.classId()).toString(), this.courseIdFromRequest,
+                            this.unitIdFromRequest, this.lessonIdFromRequest,
+                            Utils.convertListToPostgresArrayStringRepresentation(items));
+                    } else {
+                        count = Base.exec(AJEntityCollection.UPDATE_ASSESSMENTS_CV_BY_CUL,
+                            new JsonArray().add(this.context.classId()).toString(), this.courseIdFromRequest,
+                            this.unitIdFromRequest, this.lessonIdFromRequest,
+                            Utils.convertListToPostgresArrayStringRepresentation(items));
+                    }
+                } else if (this.courseIdFromRequest != null && this.unitIdFromRequest != null) {
+                    if (this.entity.equalsIgnoreCase(AJEntityClass.CV_ENTITY_ALL)) {
+                        count = Base.exec(AJEntityCollection.UPDATE_ITEMS_CV_BY_CU,
+                            new JsonArray().add(this.context.classId()).toString(), this.courseIdFromRequest,
+                            this.unitIdFromRequest, Utils.convertListToPostgresArrayStringRepresentation(items));
+                    } else if (this.entity.equalsIgnoreCase(AJEntityCollection.FORMAT_TYPE_COLLECTION)) {
+                        count = Base.exec(AJEntityCollection.UPDATE_COLLECTIONS_CV_BY_CU,
+                            new JsonArray().add(this.context.classId()).toString(), this.courseIdFromRequest,
+                            this.unitIdFromRequest, Utils.convertListToPostgresArrayStringRepresentation(items));
+                    } else {
+                        count = Base.exec(AJEntityCollection.UPDATE_ASSESSMENTS_CV_BY_CU,
+                            new JsonArray().add(this.context.classId()).toString(), this.courseIdFromRequest,
+                            this.unitIdFromRequest, Utils.convertListToPostgresArrayStringRepresentation(items));
+                    }
+                } else if (this.courseIdFromRequest != null) {
+                    if (this.entity.equalsIgnoreCase(AJEntityClass.CV_ENTITY_ALL)) {
+                        count = Base.exec(AJEntityCollection.UPDATE_ITEMS_CV_BY_C,
+                            new JsonArray().add(this.context.classId()).toString(), this.courseIdFromRequest,
+                            Utils.convertListToPostgresArrayStringRepresentation(items));
+                    } else if (this.entity.equalsIgnoreCase(AJEntityCollection.FORMAT_TYPE_COLLECTION)) {
+                        count = Base.exec(AJEntityCollection.UPDATE_COLLECTIONS_CV_BY_C,
+                            new JsonArray().add(this.context.classId()).toString(), this.courseIdFromRequest,
+                            Utils.convertListToPostgresArrayStringRepresentation(items));
+                    } else {
+                        count = Base.exec(AJEntityCollection.UPDATE_ASSESSMENTS_CV_BY_C,
+                            new JsonArray().add(this.context.classId()).toString(), this.courseIdFromRequest,
+                            Utils.convertListToPostgresArrayStringRepresentation(items));
+                    }
+                }
+
+                LOGGER.debug("Marked {} items visible", count);
+                return new ExecutionResult<>(
+                    MessageResponseFactory.createNoContentResponse(RESOURCE_BUNDLE.getString("updated"),
+                        EventBuilderFactory.getContentVisibleEventBuilder(context.classId(), context.request())),
+                    ExecutionResult.ExecutionStatus.SUCCESSFUL);
+            } catch (DBException e) {
+                LOGGER.error("Unable to mark content visible for class {}", this.context.classId(), e);
+                throw e;
+            }
         }
+
+        return new ExecutionResult<>(
+            MessageResponseFactory.createInvalidRequestResponse(RESOURCE_BUNDLE.getString("invalid.type")),
+            ExecutionResult.ExecutionStatus.FAILED);
 
     }
 
@@ -155,7 +255,68 @@ public class ContentVisibilityHandler implements DBHandler {
         return input;
     }
 
+    private JsonObject payloadValidator(JsonObject input) {
+        List<String> TYPE_ALLOWED_VALUES = Arrays.asList(AJEntityClass.CV_TYPE_ALL, AJEntityClass.CV_TYPE_SPECIFIC);
+        List<String> ENTITY_ALLOWED_VALUES = Arrays.asList(AJEntityClass.CV_ENTITY_ALL,
+            AJEntityCollection.FORMAT_TYPE_ASSESSMENT, AJEntityCollection.FORMAT_TYPE_COLLECTION);
+
+        JsonObject result = new JsonObject();
+        if (!input.containsKey(AJEntityClass.CV_SCOPE)) {
+            return result.put(AJEntityClass.CV_SCOPE, RESOURCE_BUNDLE.getString("missing.field"));
+        }
+
+        this.scope = input.getJsonObject(AJEntityClass.CV_SCOPE);
+        if (this.scope != null && !this.scope.isEmpty()) {
+            if (!this.scope.containsKey(AJEntityClass.CV_TYPE)) {
+                return new JsonObject().put(AJEntityClass.CV_TYPE, RESOURCE_BUNDLE.getString("missing.field"));
+            }
+
+            this.type = this.scope.getString(AJEntityClass.CV_TYPE);
+            if (this.type == null || this.type.isEmpty() || !TYPE_ALLOWED_VALUES.contains(this.type)) {
+                return new JsonObject().put(AJEntityClass.CV_TYPE, RESOURCE_BUNDLE.getString("invalid.value"));
+            }
+
+            if (this.type.equalsIgnoreCase(AJEntityClass.CV_TYPE_SPECIFIC)) {
+                JsonObject errors = new DefaultPayloadValidator().validatePayload(input,
+                    AJEntityClass.contentVisibilityFieldSelector(), AJEntityClass.getValidatorRegistry());
+                return errors;
+            } else if (this.type.equalsIgnoreCase(AJEntityClass.CV_TYPE_ALL)) {
+                if (!this.scope.containsKey(AJEntityClass.CV_BOUNDRY)) {
+                    return new JsonObject().put(AJEntityClass.CV_BOUNDRY, RESOURCE_BUNDLE.getString("missing.field"));
+                }
+
+                this.boundry = this.scope.getJsonObject(AJEntityClass.CV_BOUNDRY);
+                if (this.boundry == null || this.boundry.isEmpty()) {
+                    return new JsonObject().put(AJEntityClass.CV_BOUNDRY, RESOURCE_BUNDLE.getString("invalid.value"));
+                }
+
+                if (!this.boundry.containsKey(AJEntityClass.CV_COURSE_ID)
+                    || !this.boundry.containsKey(AJEntityClass.CV_ENTITY)) {
+                    return new JsonObject().put("course_id or entity", RESOURCE_BUNDLE.getString("missing.field"));
+                }
+
+                this.entity = this.boundry.getString(AJEntityClass.CV_ENTITY);
+                if (this.entity == null || this.entity.isEmpty() || !ENTITY_ALLOWED_VALUES.contains(this.entity)) {
+                    return new JsonObject().put(AJEntityClass.CV_ENTITY, RESOURCE_BUNDLE.getString("invalid.value"));
+                }
+
+                // TODO: validate UUID for CUL ids
+                this.courseIdFromRequest = this.boundry.getString(AJEntityClass.CV_COURSE_ID);
+                if (this.courseIdFromRequest == null || this.courseIdFromRequest.isEmpty()) {
+                    return new JsonObject().put(AJEntityClass.CV_ENTITY, RESOURCE_BUNDLE.getString("invalid.value"));
+                }
+
+                this.unitIdFromRequest = this.boundry.getString(AJEntityClass.CV_UNIT_ID);
+                this.lessonIdFromRequest = this.boundry.getString(AJEntityClass.CV_LESSON_ID);
+            }
+        } else {
+            result.put(AJEntityClass.CV_SCOPE, RESOURCE_BUNDLE.getString("invalid.value"));
+        }
+        return result;
+    }
+
     private static class DefaultPayloadValidator implements PayloadValidator {
+
     }
 
 }

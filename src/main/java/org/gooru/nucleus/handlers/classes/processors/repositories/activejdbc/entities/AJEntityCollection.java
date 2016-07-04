@@ -44,7 +44,50 @@ public class AJEntityCollection extends Model {
     public static final String FORMAT_TYPE_ASSESSMENT_EXT = "assessment-external";
     public static final String VISIBILITY_DML = "update collection set class_visibility = class_visibility || "
         + "?::jsonb where course_id = ?::uuid and is_deleted = false and id = ANY(?::uuid[])";
-
+    
+    public static final String UPDATE_ITEMS_CV_BY_C = "UPDATE collection SET class_visibility = class_visibility || "
+        + "?::jsonb WHERE course_id = ?::uuid AND is_deleted = false AND id = ANY(?::uuid[])";
+    
+    public static final String UPDATE_ITEMS_CV_BY_CU = "UPDATE collection SET class_visibility = class_visibility || "
+        + "?::jsonb WHERE course_id = ?::uuid AND unit_id = ?::uuid AND is_deleted = false AND id = ANY(?::uuid[])";
+    
+    public static final String UPDATE_ITEMS_CV_BY_CUL = "UPDATE collection SET class_visibility = class_visibility || "
+        + "?::jsonb WHERE course_id = ?::uuid AND unit_id = ?::uuid AND lesson_id = ?::uuid AND is_deleted = false AND id = ANY(?::uuid[])";
+    
+    public static final String UPDATE_COLLECTIONS_CV_BY_C = "UPDATE collection SET class_visibility = class_visibility || "
+        + "?::jsonb WHERE course_id = ?::uuid AND format = 'collection'::content_container_type AND is_deleted = false AND id = ANY(?::uuid[])";
+    
+    public static final String UPDATE_COLLECTIONS_CV_BY_CU = "UPDATE collection SET class_visibility = class_visibility || "
+        + "?::jsonb WHERE course_id = ?::uuid AND unit_id = ?::uuid AND format = 'collection'::content_container_type AND is_deleted = false"
+        + " AND id = ANY(?::uuid[])";
+    
+    public static final String UPDATE_COLLECTIONS_CV_BY_CUL = "UPDATE collection SET class_visibility = class_visibility || "
+        + "?::jsonb WHERE course_id = ?::uuid AND unit_id = ?::uuid AND lesson_id = ?::uuid AND format = 'collection'::content_container_type AND"
+        + " is_deleted = false AND id = ANY(?::uuid[])";
+    
+    public static final String UPDATE_ASSESSMENTS_CV_BY_C = "UPDATE collection SET class_visibility = class_visibility || "
+        + "?::jsonb WHERE course_id = ?::uuid AND format != 'collection'::content_container_type AND is_deleted = false AND id = ANY(?::uuid[])";
+    
+    public static final String UPDATE_ASSESSMENTS_CV_BY_CU = "UPDATE collection SET class_visibility = class_visibility || "
+        + "?::jsonb WHERE course_id = ?::uuid AND unit_id = ?::uuid AND format != 'collection'::content_container_type AND is_deleted = false"
+        + " AND id = ANY(?::uuid[])";
+    
+    public static final String UPDATE_ASSESSMENTS_CV_BY_CUL = "UPDATE collection SET class_visibility = class_visibility || "
+        + "?::jsonb WHERE course_id = ?::uuid AND unit_id = ?::uuid AND lesson_id = ?::uuid AND format != 'collection'::content_container_type AND"
+        + " is_deleted = false AND id = ANY(?::uuid[])";
+    
+    public static final String SELECT_NONVISIBLE_ITEMS_BY_C =
+        "SELECT id FROM collection WHERE NOT class_visibility ?? ? AND is_deleted = false AND format = ?::content_container_type"
+        + " AND course_id = ?::uuid";
+    
+    public static final String SELECT_NONVISIBLE_ITEMS_BY_CU =
+        "SELECT id FROM collection WHERE NOT class_visibility ?? ? AND is_deleted = false AND format = ?::content_container_type"
+        + " AND course_id = ?::uuid AND unit_id = ?::uuid";
+    
+    public static final String SELECT_NONVISIBLE_ITEMS_BY_CUL =
+        "SELECT id FROM collection WHERE NOT class_visibility ?? ? AND is_deleted = false AND format = ?::content_container_type"
+        + " AND course_id = ?::uuid AND unit_id = ?::uuid AND lesson_id = ?::uuid";
+    
     // The model needs to be hydrated with format, else it may fail
     public boolean isAssessment() {
         return FORMAT_TYPE_ASSESSMENT.equalsIgnoreCase(this.getString(FORMAT_TYPE));

@@ -1,5 +1,7 @@
 package org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.dbhelpers;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.ResourceBundle;
 
 import org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.Utils;
@@ -10,6 +12,7 @@ import org.gooru.nucleus.handlers.classes.processors.responses.MessageResponse;
 import org.gooru.nucleus.handlers.classes.processors.responses.MessageResponseFactory;
 import org.javalite.activejdbc.Base;
 import org.javalite.activejdbc.DBException;
+import org.javalite.activejdbc.LazyList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,16 +52,18 @@ public final class ContentVisibilityHelper {
      * @return ExecutionResult signifying whether to continue post this validation
      */
     public static ExecutionResult<MessageResponse> validatePayloadWithClassSetting(JsonObject payload,
-        AJEntityClass entityClass) {
+        AJEntityClass entityClass, String entity) {
         String visibility = entityClass.getContentVisibility();
         if (AJEntityClass.CONTENT_VISIBILITY_TYPE_VISIBLE_ALL.equalsIgnoreCase(visibility)) {
             return new ExecutionResult<>(MessageResponseFactory
                 .createInvalidRequestResponse(RESOURCE_BUNDLE.getString("class.setting.visible.all.error")),
                 ExecutionResult.ExecutionStatus.FAILED);
         } else if (AJEntityClass.CONTENT_VISIBILITY_TYPE_VISIBLE_COLLECTION.equalsIgnoreCase(visibility)) {
-            if (payload.getJsonArray(AJEntityClass.CV_COLLECTIONS) != null) {
-                return new ExecutionResult<>(MessageResponseFactory
-                    .createInvalidRequestResponse(RESOURCE_BUNDLE.getString("class.setting.visible.collections.error")),
+            if (payload.getJsonArray(AJEntityClass.CV_COLLECTIONS) != null
+                || (entity != null && entity.equalsIgnoreCase(AJEntityCollection.FORMAT_TYPE_COLLECTION))) {
+                return new ExecutionResult<>(
+                    MessageResponseFactory.createInvalidRequestResponse(
+                        RESOURCE_BUNDLE.getString("class.setting.visible.collections.error")),
                     ExecutionResult.ExecutionStatus.FAILED);
             }
         }
@@ -106,6 +111,46 @@ public final class ContentVisibilityHelper {
                 MessageResponseFactory.createInvalidRequestResponse(RESOURCE_BUNDLE.getString("empty.payload")),
                 ExecutionResult.ExecutionStatus.FAILED);
         }
+    }
+    
+    public static List<String> getNonVisibleCollectionsAssessments(String classId, String courseId, String unitId, String lessonId) {
+        List<String> collections = getNonVisibleItems(classId, courseId, unitId, lessonId, AJEntityCollection.FORMAT_TYPE_COLLECTION);
+        List<String> assessments = getNonVisibleItems(classId, courseId, unitId, lessonId, AJEntityCollection.FORMAT_TYPE_ASSESSMENT);
+        List<String> extAssessments = getNonVisibleItems(classId, courseId, unitId, lessonId, AJEntityCollection.FORMAT_TYPE_ASSESSMENT_EXT);
+        
+        int resultSize = collections.size() + assessments.size() + extAssessments.size();
+        List<String> result = new ArrayList<>(resultSize);
+        if (collections != null) {
+            result.addAll(collections);
+        }
+        
+        if (assessments != null) {
+            result.addAll(assessments);
+        }
+        
+        if (extAssessments != null) {
+            result.addAll(extAssessments);
+        }
+        
+        return result;
+    }
+    
+    public static List<String> getNonVisibleItems(String classId, String courseId, String unitId, String lessonId, String type) {
+        LazyList<AJEntityCollection> collections;
+        if (courseId != null && unitId != null && lessonId != null) {
+            collections = AJEntityCollection.findBySQL(AJEntityCollection.SELECT_NONVISIBLE_ITEMS_BY_CUL, classId, type, courseId, unitId, lessonId);
+        } else if (courseId != null && unitId != null ) {
+            collections = AJEntityCollection.findBySQL(AJEntityCollection.SELECT_NONVISIBLE_ITEMS_BY_CU, classId, type, courseId, unitId);
+        } else {
+            collections = AJEntityCollection.findBySQL(AJEntityCollection.SELECT_NONVISIBLE_ITEMS_BY_C, classId, type, courseId);
+        }
+        
+        List<String> ids = new ArrayList<>(collections.size());
+        if (collections != null && !collections.isEmpty()) {
+            collections.forEach(collection -> ids.add(collection.get(AJEntityCollection.ID).toString()));
+        }
+        LOGGER.debug("number of non visible '{}': {}", type, ids.size());
+        return ids;
     }
 
     private ContentVisibilityHelper() {
