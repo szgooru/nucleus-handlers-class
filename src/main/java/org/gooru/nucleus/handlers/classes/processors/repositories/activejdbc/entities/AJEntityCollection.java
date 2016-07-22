@@ -23,12 +23,12 @@ public class AJEntityCollection extends Model {
     // Instead of stating equals assessment we are saying not equals collection because we need to include both
     // assessment and external assessment here
     public static final String FETCH_VISIBLE_ASSESSMENTS_QUERY =
-        "select id from collection where course_id = ?::uuid and format != 'collection'::content_container_type and "
-            + "is_deleted = false and class_visibility ?? ?";
+        "select id, course_id, unit_id, lesson_id from collection where course_id = ?::uuid and format != 'collection'::content_container_type and "
+            + "is_deleted = false and class_visibility ?? ? group by course_id, unit_id, lesson_id, id";
     // Select both id and type and then in CPU separate them in buckets instead of going to db multiple times
     public static final String FETCH_VISIBLE_ITEMS_QUERY =
-        "select id, format from collection where course_id = ?::uuid and"
-            + " is_deleted = false and class_visibility ?? ?";
+        "select id, course_id, unit_id, lesson_id, format from collection where course_id = ?::uuid and"
+            + " is_deleted = false and class_visibility ?? ? group by course_id, unit_id, lesson_id, format, id";
 
     public static final String FETCH_STATISTICS_QUERY =
         "select course_id, unit_id, lesson_id, format, count(id) from collection where course_id = ?::uuid and "

@@ -1,6 +1,10 @@
 package org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.dbhelpers;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.entities.AJEntityClass;
 import org.gooru.nucleus.handlers.classes.processors.repositories.activejdbc.entities.AJEntityCollection;
@@ -36,11 +40,52 @@ public final class VisibleContentHelper {
     public static void populateVisibleAssessments(String classId, String courseId, JsonObject result) {
         LazyList<AJEntityCollection> assessments =
             AJEntityCollection.findBySQL(AJEntityCollection.FETCH_VISIBLE_ASSESSMENTS_QUERY, courseId, classId);
-        JsonArray idArray = new JsonArray();
-        for (AJEntityCollection assessment : assessments) {
-            idArray.add(assessment.getId().toString());
+        
+        Map<String, Set<String>> unitLessonMap = new HashMap<>();
+        Map<String, JsonArray> assessmentsByLesson = new HashMap<>();
+
+        assessments.forEach(map -> {
+            String unitId = map.get(AJEntityCollection.UNIT_ID).toString();
+            String lessonId = map.get(AJEntityCollection.LESSON_ID).toString();
+            if (unitLessonMap.containsKey(unitId)) {
+                unitLessonMap.get(unitId).add(map.getString(AJEntityCollection.LESSON_ID));
+            } else {
+                Set<String> lessons = new HashSet<>();
+                lessons.add(map.getString(AJEntityCollection.LESSON_ID));
+                unitLessonMap.put(unitId, lessons);
+            }
+            
+            if (assessmentsByLesson.containsKey(lessonId)) {
+                assessmentsByLesson.get(lessonId).add(map.getString(AJEntityCollection.ID));
+            } else {
+                JsonArray assessmentsArray = new JsonArray();
+                assessmentsArray.add(map.getString(AJEntityCollection.ID));
+                assessmentsByLesson.put(lessonId, assessmentsArray);
+            }
+        });
+
+        JsonArray unitArray = new JsonArray();
+        for (Map.Entry<String, Set<String>> stringSetEntry : unitLessonMap.entrySet()) {
+            Set<String> lessons = stringSetEntry.getValue();
+            JsonArray lessonArray = new JsonArray();
+            for (String lessonId : lessons) {
+                JsonObject lesson = new JsonObject();
+                lesson.put(AJEntityCollection.ID, lessonId);
+                lesson.put(AJEntityClass.CV_ASSESSMENTS, assessmentsByLesson.get(lessonId));
+                lessonArray.add(lesson);
+            }
+
+            JsonObject unit = new JsonObject();
+            unit.put(AJEntityCollection.ID, stringSetEntry.getKey());
+            unit.put(AJEntityCollection.LESSONS, lessonArray);
+
+            unitArray.add(unit);
         }
-        result.put(AJEntityClass.CV_ASSESSMENTS, idArray);
+        JsonObject course = new JsonObject();
+        course.put(AJEntityCollection.ID, courseId);
+        course.put(AJEntityCollection.UNITS, unitArray);
+
+        result.put(AJEntityCollection.COURSE, course);
     }
 
     /**
@@ -54,21 +99,68 @@ public final class VisibleContentHelper {
     public static void populateVisibleItems(String classId, String courseId, JsonObject result) {
         LazyList<AJEntityCollection> items =
             AJEntityCollection.findBySQL(AJEntityCollection.FETCH_VISIBLE_ITEMS_QUERY, courseId, classId);
-        JsonArray collections = new JsonArray();
-        JsonArray assessments = new JsonArray();
-        String id;
-        for (AJEntityCollection item : items) {
-            id = item.getId().toString();
-            if (item.isAssessment() || item.isAssessmentExternal()) {
-                assessments.add(id);
-            } else if (item.isCollection()) {
-                collections.add(id);
+        
+        Map<String, Set<String>> unitLessonMap = new HashMap<>();
+        Map<String, JsonArray> collectionsByLesson = new HashMap<>();
+        Map<String, JsonArray> assessmentsByLesson = new HashMap<>();
+
+        items.forEach(collection -> {
+            String id = collection.getString(AJEntityCollection.ID);
+            String unitId = collection.getString(AJEntityCollection.UNIT_ID);
+            String lessonId = collection.getString(AJEntityCollection.LESSON_ID);
+
+            if (unitLessonMap.containsKey(unitId)) {
+                unitLessonMap.get(unitId).add(collection.getString(AJEntityCollection.LESSON_ID));
+            } else {
+                Set<String> lessons = new HashSet<>();
+                lessons.add(collection.getString(AJEntityCollection.LESSON_ID));
+                unitLessonMap.put(unitId, lessons);
+            }
+            
+            if (collection.isAssessment() || collection.isAssessmentExternal()) {
+                if (assessmentsByLesson.containsKey(lessonId)) {
+                    assessmentsByLesson.get(lessonId).add(id);
+                } else {
+                    JsonArray assessmentsArray = new JsonArray();
+                    assessmentsArray.add(id);
+                    assessmentsByLesson.put(lessonId, assessmentsArray);
+                }
+            } else if (collection.isCollection()) {
+                if (collectionsByLesson.containsKey(lessonId)) {
+                    collectionsByLesson.get(lessonId).add(id);
+                } else {
+                    JsonArray collectionsArray = new JsonArray();
+                    collectionsArray.add(id);
+                    collectionsByLesson.put(lessonId, collectionsArray);
+                }
             } else {
                 LOGGER.warn("Invalid format for collection/assessment id {}", id);
             }
+        });
+
+        JsonArray unitArray = new JsonArray();
+        for (Map.Entry<String, Set<String>> stringSetEntry : unitLessonMap.entrySet()) {
+            Set<String> lessons = stringSetEntry.getValue();
+            JsonArray lessonArray = new JsonArray();
+            for (String lessonId : lessons) {
+                JsonObject lesson = new JsonObject();
+                lesson.put(AJEntityCollection.ID, lessonId);
+                lesson.put(AJEntityClass.CV_ASSESSMENTS, assessmentsByLesson.get(lessonId));
+                lesson.put(AJEntityClass.CV_COLLECTIONS, collectionsByLesson.get(lessonId));
+                lessonArray.add(lesson);
+            }
+
+            JsonObject unit = new JsonObject();
+            unit.put(AJEntityCollection.ID, stringSetEntry.getKey());
+            unit.put(AJEntityCollection.LESSONS, lessonArray);
+
+            unitArray.add(unit);
         }
-        result.put(AJEntityClass.CV_ASSESSMENTS, assessments);
-        result.put(AJEntityClass.CV_COLLECTIONS, collections);
+        JsonObject course = new JsonObject();
+        course.put(AJEntityCollection.ID, courseId);
+        course.put(AJEntityCollection.UNITS, unitArray);
+
+        result.put(AJEntityCollection.COURSE, course);
     }
 
     /**
